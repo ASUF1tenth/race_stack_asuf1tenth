@@ -3,7 +3,7 @@ services:
   nuc:
     build:
       context: .
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: .devops/.devcontainer/Dockerfile
       args:
         - USERNAME=${USER}
         - UID=${UID}

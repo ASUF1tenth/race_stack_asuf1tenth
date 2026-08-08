@@ -9,8 +9,8 @@ rosdep update &&
     rosdep install --from-paths /home/$USERNAME/ws/src --ignore-src -y
 
 # Setup race_stack
-bash ~/ws/src/race_stack/.install_utils/f110_sim_setup.sh || echo "Failed to setup f110_sim"
-bash ~/ws/src/race_stack/.install_utils/gb_opt_setup.sh || echo "Failed to setup gb_opt"
+bash ~/ws/src/race_stack/.devops/.install_utils/f110_sim_setup.sh || echo "Failed to setup f110_sim"
+bash ~/ws/src/race_stack/.devops/.install_utils/gb_opt_setup.sh || echo "Failed to setup gb_opt"
 
 # Apply Joystick patch
 sudo chmod 666 /dev/input/js0
