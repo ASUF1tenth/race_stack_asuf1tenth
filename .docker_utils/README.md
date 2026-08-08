@@ -4,33 +4,28 @@
 ## Clone Repo
 Be aware to clone the ROS 2 branch!
 ```bash
-git clone -b ros2-jazzy --recurse-submodules git@github.com:ForzaETH/race_stack.git 
+git clone -b ros2-jazzy --recurse-submodules https://github.com/ASUF1tenth/race_stack_asuf1tenth.git 
 cd race_stack
 ```
 
 ## Structure
-The docker image is defined with the [Dockerfile](../.devcontainer/Dockerfile) and two very similar version can be built, for either `SIM` or `NUC` with the argument `SIM` to 1 or 0 respectively.
+The docker image is defined with the [Dockerfile](../.devcontainer/Dockerfile). A single unified image is built to support both simulation and physical hardware deployment.
 
 
-**NOTE**: it is suggested to set a static IP for the robot with the ROS_HOSTNAME environment variable, so that the IP of the robot is always the same, as from [networking structure](../stack_master/checklists/networking.md).
-Setting up a static ip at this moment will allow you to set extra computers (that can ping such IP) to listen to the ROS messags on the robot, enabling fast and quick development. 
+**NOTE**: it is suggested to set a static IP for the robot with the ROS_HOSTNAME environment variable, so that the IP of the robot is always the same. Setting up a static ip at this moment will allow you to set extra computers (that can ping such IP) to listen to the ROS messags on the robot, enabling fast and quick development. 
 
 
 ## How to use (docker container)
-**Note**: this following tutorial assumes you are using an x86 platform (e.g. Intel CPU). TODO: arm instructions
+**Note**: this following tutorial assumes you are using an x86 platform (e.g. Intel CPU). For running on the NVIDIA Jetson Nano or other ARM64 platforms, please refer to the [Jetson Nano & ARM64 Docker Guide](./JETSON_GUIDE.md).
 
 **Note 2**: docker is assumed to be installed and runnable without sudo (e.g. on Linux see [Post-Installation steps](https://docs.docker.com/engine/install/linux-postinstall/)).
 
 **Step 1/5: Build the container**
-First export the following environment variables
+Build the docker image with `docker compose` by prepending your user and group IDs inline (this avoids shell-specific read-only variable assignment errors):
 ```bash
-export UID=$(id -u)
-export GID=$(id -g)
+env UID=$(id -u) GID=$(id -g) docker compose build nuc
 ```
-then, in the same terminal, build the docker image with `docker compose`:
-```bash
-docker compose build nuc
-```
+*(Note: Prepending `env UID=$(id -u) GID=$(id -g)` is mandatory. If omitted, docker compose defaults to blank strings for UID and GID, which triggers syntax errors and user-creation crashes during the Dockerfile build process).*
 
 **Step 2/5: create the folder structure for caching colcon builds**
 Create a folder structure that resembles the following. Note that it is a folder up from the position of the `race_stack`.
@@ -53,24 +48,26 @@ mkdir -p ../cache/jazzy/build ../cache/jazzy/install ../cache/jazzy/log
 ```
 
 **Step 3/5: Set up the launch script**
-Check that the `FORZAETH_DIR` variable is correctly set inside of [`main_dock.sh`](./main_dock.sh) to the path of the `race_stack` folder. This is needed for the simulator to work correctly. You can check the full path with the following command
-```bash
-cd <race_stack folder>
-pwd
-```
-Then copy the output of the `pwd` command and paste it in the `FORZAETH_DIR` variable in the [`main_dock.sh`](./main_dock.sh) file.
+The launch script [`main_dock.sh`](./main_dock.sh) is configured to dynamically resolve its path using `BASH_SOURCE`. No manual modification of `FORZAETH_DIR` is required.
 
 **Step 4/5: Set up X forwarding and launch the container**
-To get GUI application properly forwarded, run the additional setup script that sets up the xauth file for the container. This can be done by running the following command:
-```bash
-cd <race_stack folder>
-source .devcontainer/xauth_setup.sh
-```
+To get GUI applications (like RViz2 and Matplotlib) properly forwarded:
 
-Then, in the same terminal, launch the docker container with the following command
-```bash
-./.docker_utils/main_dock.sh
-```
+1. If your host is running a **Wayland** session (default for many modern Ubuntu installations), run the following on the host to allow the container connection to your desktop:
+   ```bash
+   xhost +local:$USER
+   ```
+
+2. Run the setup script to establish the container `.Xauthority` configuration:
+   ```bash
+   cd <race_stack folder>
+   source .devcontainer/xauth_setup.sh
+   ```
+
+3. Launch the docker container in the same terminal:
+   ```bash
+   ./.docker_utils/main_dock.sh
+   ```
 
 You will now have access to a terminal inside the container. 
 Here, run the postcreate command with the following line
@@ -79,6 +76,15 @@ cd ~/ws/src/race_stack
 ./.install_utils/post_create_command.sh
 ```
 This will setup the final packages and configurations needed for the container to work correctly.
+
+Once the setup is done, compile the workspace using one of these options:
+* **Option A: VS Code Devcontainer Task (Recommended)**: Press `Ctrl + Shift + B` (or select `Terminal -> Run Build Task...`) and choose your build profile (e.g., `Release`). This utilizes the pre-configured script which automatically skips the `f110_gym` python package.
+* **Option B: Manual Terminal Build**: If building inside the container terminal, run:
+  ```bash
+  cd ~/ws
+  colcon build --symlink-install --packages-ignore f110_gym
+  ```
+  *(Note: We must pass `--packages-ignore f110_gym` because the simulator python package is already installed via pip in editable mode during the setup phase, and its custom layout is incompatible with colcon's `--symlink-install` path resolution).*
 
 **Step 5/5: Open additional terminals, reopen a closed terminal**
 You can now attach multiple terminals to the container with the secondary scritp:
@@ -97,6 +103,9 @@ cd <race_stack folder>
 
 
 ## How to use (VSCode devcontainer)
+
+> [!NOTE]
+> For a beginner-friendly setup guide explaining what VS Code Devcontainers are and how to install and use them, refer to our [VS Code Devcontainer Guide](../devcontainer_guide.md).
 
 **Note**: this following tutorial assumes you are using an x86 platform (e.g. Intel CPU). TODO: arm instructions
 
@@ -145,10 +154,10 @@ mkdir -p ../cache/jazzy/build ../cache/jazzy/install ../cache/jazzy/log
 
 **Step 3/5: Build the container**
 
-In a terminal connected to the remote machine you want to use, move to the location of the racestack, and build the docker container with the compose command:
+In a terminal connected to the remote machine you want to use, move to the location of the racestack, and build the docker container with the compose command (prepending user/group IDs is mandatory to prevent compilation crashes during user creation):
 ```bash
 cd <race_stack_directory>
-docker compose build nuc
+env UID=$(id -u) GID=$(id -g) docker compose build nuc
 ```
 
 Change the `image` attribute in the devcontainer file correspondingly:
