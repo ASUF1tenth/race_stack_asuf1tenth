@@ -91,3 +91,26 @@ These weight the probability of a hit or miss in the occupancy grid.
 
 If we don't trust the lidar (eg. black tubes), we should reduce the miss probability (free space may mean undetected things).
 
+### Large Map Localization & Constraint Search
+When running Cartographer on large tracks (>200 meters), driving while unlocalized triggers a map-wide constraint search (`MatchFullSubmap`). Evaluating millions of search candidates across the whole map grid can cause a C++ memory allocation crash:
+`std::length_error: cannot create std::vector larger than max_size()`
+
+To prevent this:
+1. **Initial Pose Alignment:** Always place the car near the mapping start line $(0,0,0)$ or use **2D Pose Estimate** in RViz to localize before driving.
+2. **Cap Constraint Distance:** Set `POSE_GRAPH.constraint_builder.max_constraint_distance = 15.0` in `f110_2d_loc.lua` to bound the search radius.
+
+## TF Tree Readiness & Localization Robustness
+
+
+### Implemented Fixes
+* **Startup TF Synchronization in `carstate_node`**:
+  `carstate_node.py` now explicitly waits for the `map` $\rightarrow$ `base_link` transform using `tf_buffer.can_transform("map", "base_link", ...)` inside `wait_for_messages()` before starting its 80 Hz pose publishing timer loops. This prevents the initial race condition where `carstate_node` attempts to query TF before Cartographer or the localization node finishes loading the map and broadcasting `map` $\rightarrow$ `odom`, eliminating `Tf has two or more unconnected trees` warnings on node startup.
+
+### Recommendations for Future Enhancements
+1. **Reduce Blocking Timeout in 80 Hz Timer Loop (`carstate_node.py`)**:
+   Currently, `cartesian_state_loop` calls `lookup_transform` with `rclpy.duration.Duration(seconds=6.9)`. On single-threaded executors, a failed lookup stalls the executor thread for up to 6.9 seconds. In future updates, reduce this timeout to `Duration(seconds=0.01)` or `0.02` so temporary TF dropouts skip a tick gracefully without thread starvation.
+2. **Controller Manager State Guard (`controller_manager.py`)**:
+   Update `controller_manager` (Pure Pursuit / MAP controller) to verify that `/car_state/pose` and `/car_state/odom` are actively publishing fresh messages before engaging controller outputs.
+3. **Cartographer / Localization TF Frequency**:
+   In Cartographer `.lua` configuration (`stack_master/config/[racecar_version]/slam/f110_2d_loc.lua`), ensure `transform_publish_period_sec` is set appropriately (e.g. `0.02` for 50 Hz or `0.05` for 20 Hz) to keep high-rate state estimation synchronized.
+
