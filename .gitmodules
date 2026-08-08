@@ -18,3 +18,6 @@
 	path = sensors/vesc
 	url = https://github.com/ForzaETH/vesc.git
 	branch = foxy
+[submodule "base_system/autodrive/autodrive_devkit"]
+	path = base_system/autodrive/autodrive_devkit
+	url = https://github.com/ASUF1tenth/AutoDRIVE-RoboRacer-Sim-Racing.git
