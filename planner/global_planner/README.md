@@ -12,7 +12,7 @@ The Global Planner package is a ROS2 package designed to generate a global traje
  - `show_plots`: Show additional plots for debugging during generation of the global trajectory.
  - `map_editor`: `True` if the map editor is used.
  - `map_name`: Sets the name of the map.
- - `create_map`: Create a map that can be used in the simulator and save a YAML file and a PNG of the map in the directory `stack_master/maps/map_name`.
+ - `create_map`: Create a map that can be used in the simulator and save a YAML file and a PNG of the map in the directory `supervisor/stack_master/maps/map_name`.
  - `reverse_mapping`: Generate a global trajectory in the reverse direction.
  - `required_laps`: Number of laps required before the generation of the global trajectory can be started. **Note:** When `required_laps: 0` or when running in `map_editor` / manual mode, `cent_length` evaluates to `0.0m` as normal, expected behavior. This instructs `extract_centerline` to skip the +/-15% driven distance validation check and accept the closed contour found in the map image.
 

@@ -34,7 +34,7 @@ In the binarized map images (`pf_map.png` / `ws_everest.png`), free space is rep
 
 ## 2. Modes & Parameter Reference: `map_editor` vs `create_map`
 
-Configured in `stack_master/launch/mapping_launch.xml` and `stack_master/config/global_planner/global_planner_params.yaml`.
+Configured in `supervisor/stack_master/launch/mapping_launch.xml` and `supervisor/stack_master/config/global_planner/global_planner_params.yaml`.
 
 | Parameter Name | Config Location | Data Type | Default Value | Description & Behavior |
 | :--- | :--- | :--- | :--- | :--- |
@@ -49,7 +49,7 @@ Configured in `stack_master/launch/mapping_launch.xml` and `stack_master/config/
 ## 3. How to Fix Map Leaks: Step-by-Step Solutions
 
 ### Solution 1: Limit Cartographer LiDAR Scan Range (Hardware Fix)
-In `stack_master/config/<NUCx>/slam/f110_2d.lua`:
+In `supervisor/stack_master/config/<NUCx>/slam/f110_2d.lua`:
 - Lower `TRAJECTORY_BUILDER_2D.max_range = 8.0` or `10.0` (down from `25.0`).
 - This stops LiDAR rays from mapping room space far outside your track barriers.
 
@@ -72,7 +72,7 @@ If LiDAR rays already leaked into the PNG map:
    ros2 launch stack_master mapping_launch.xml map_name:=my_track map_editor:=True
    ```
 2. Once the matplotlib GUI pops up, open the generated PNG image in **GIMP**, **Pinta**, or **Photoshop**:
-   `stack_master/maps/my_track/my_track.png`
+   `supervisor/stack_master/maps/my_track/my_track.png`
 3. Select a **solid black brush ($0,0,0$)**:
    - Paint over the entire outer room background until it is completely black.
    - Paint over the central island until it is completely black.

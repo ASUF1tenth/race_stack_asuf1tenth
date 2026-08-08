@@ -39,7 +39,7 @@ A short overview of the reconfigurable parameters:
 - `noMemoryMode`: When set to `TRUE`, obstacles will not be stored, and only the currently visible obstacles are published. Can help in races. 
 
 ## Other Parameters
-This is a brief explanation of parameters, which are not dynamically reconfigurable. They can be found in `stack_master/config/opponent_tracker_params.yaml`
+This is a brief explanation of parameters, which are not dynamically reconfigurable. They can be found in `supervisor/stack_master/config/opponent_tracker_params.yaml`
 ### Opponent Detection
 - `rate`: The rate at which the node is running.
 - `lambda`: The minimum reliable detection angle in `degrees`.

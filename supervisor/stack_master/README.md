@@ -46,7 +46,7 @@ ros2 launch stack_master base_system_launch.xml map_name:=<name of mapped track>
 ros2 launch stack_master time_trials_launch.xml racecar_version:=<NUCx used> LU_table:=<Look-Up Table name> ctrl_algo:=<control algorithm> 
 ```
   - `<NUCx>` depends on which car you are using. Parameters are available for NUC2, NUC5, NUC6, SIM (the latter represents a dummy car).
-  - `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `system_identification/steering_lookup/cfg` folder.
+  - `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `controller/system_identification/steering_lookup/cfg` folder.
   - `<control algorithm>` is the control algorithm you want to use. Current possibilities are MAP / PP.
 
 ### Speed Scaling / Velocity Tuning
@@ -59,7 +59,7 @@ The velocities generated from the map trajectories can be scaled down or tuned u
   ros2 param set /sector_tuner Sector0.scaling 0.2
   ```
 * **Permanent Config:**
-  Modify `src/race_stack/stack_master/maps/<map_name>/speed_scaling.yaml` and rebuild using:
+  Modify `src/race_stack/supervisor/stack_master/maps/<map_name>/speed_scaling.yaml` and rebuild using:
   ```shell
   colcon build --packages-select stack_master
   ```
@@ -70,7 +70,7 @@ The velocities generated from the map trajectories can be scaled down or tuned u
 ros2 launch stack_master head_to_head_launch.xml racecar_version:=<NUCx used> LU_table:=<Look-Up Table name> ctrl_algo:=<control algorithm> overtake_mode:=spliner
 ```
 - `<NUCx>` depends on which car you are using. Parameters are available for NUC2, NUC5, NUC6, SIM (the latter represents a dummy car).
-- `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `system_identification/steering_lookup/cfg` folder.
+- `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `controller/system_identification/steering_lookup/cfg` folder.
 - `<control algorithm>` is the control algorithm you want to use. Current possibilities are MAP / PP.
 - `<overtake_mode>` is the mode you want to use for overtaking. `spliner` is the only current possibility.
 

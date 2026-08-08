@@ -68,7 +68,7 @@ The localization package is launched via the aformentioned main state estimation
 
 ### Parameters
 
-The parameters associated with SLAM localization can be modified in the configuration files located under `stack_master/config/[racecar_version]/slam/`, where `[racecar_version]` is the subfolder corresponding to the vehicle in question. When mapping, edit the `f110_2d.lua` (for Mapping) or `f110_2d_loc.lua` (for Localization) file.
+The parameters associated with SLAM localization can be modified in the configuration files located under `supervisor/stack_master/config/[racecar_version]/slam/`, where `[racecar_version]` is the subfolder corresponding to the vehicle in question. When mapping, edit the `f110_2d.lua` (for Mapping) or `f110_2d_loc.lua` (for Localization) file.
 
 Based on our trust on Odometry values:
 - `TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight`
@@ -112,5 +112,5 @@ To prevent this:
 2. **Controller Manager State Guard (`controller_manager.py`)**:
    Update `controller_manager` (Pure Pursuit / MAP controller) to verify that `/car_state/pose` and `/car_state/odom` are actively publishing fresh messages before engaging controller outputs.
 3. **Cartographer / Localization TF Frequency**:
-   In Cartographer `.lua` configuration (`stack_master/config/[racecar_version]/slam/f110_2d_loc.lua`), ensure `transform_publish_period_sec` is set appropriately (e.g. `0.02` for 50 Hz or `0.05` for 20 Hz) to keep high-rate state estimation synchronized.
+   In Cartographer `.lua` configuration (`supervisor/stack_master/config/[racecar_version]/slam/f110_2d_loc.lua`), ensure `transform_publish_period_sec` is set appropriately (e.g. `0.02` for 50 Hz or `0.05` for 20 Hz) to keep high-rate state estimation synchronized.
 

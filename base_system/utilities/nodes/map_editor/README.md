@@ -24,7 +24,7 @@ In these cases, the Map Editor package is a convenience to allow the 2D map gene
 
     Drive until the map is sufficiently explored (clear trackbounds, good loop closures). You can stop anywhere.
 
-    Close the matplotlib dialog box. This will save a baseline map (png, yaml) and pbstream file **on the Car** at the directory `race_stack/stack_master/maps`.
+    Close the matplotlib dialog box. This will save a baseline map (png, yaml) and pbstream file **on the Car** at the directory `race_stack/supervisor/stack_master/maps`.
 
 ### 2a. Calling Global Planner on your PC
 This option is useful if the network connection between the car and your computer is slow (e.g. congested network), causing SSH display forwarding to be laggy.
@@ -56,7 +56,7 @@ This option is useful if the network connection between the car and your compute
 
 4. Copy map with additional information **from your PC to the car**:
 
-    This can be done by simply copying the map of interest (a folder) from your local `race_stack/stack_master/maps` to the one on the car.
+    This can be done by simply copying the map of interest (a folder) from your local `race_stack/supervisor/stack_master/maps` to the one on the car.
 
 6. Congrats, you should be done. Verify by running base_system **on the car** with the new map.
 

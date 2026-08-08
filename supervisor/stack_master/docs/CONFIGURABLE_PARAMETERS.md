@@ -13,7 +13,7 @@ This document provides an exhaustive reference of all configurable parameters ac
 
 ## 1. Drivers & Hardware Layer (`vesc`, `urg_node`, `ackermann_mux`)
 
-Configured via `stack_master/config/<NUCx>/vesc.yaml`, `sensors.yaml`, `mux.yaml`.
+Configured via `supervisor/stack_master/config/<NUCx>/vesc.yaml`, `sensors.yaml`, `mux.yaml`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -32,7 +32,7 @@ Configured via `stack_master/config/<NUCx>/vesc.yaml`, `sensors.yaml`, `mux.yaml
 
 ## 2. State Estimation & SLAM Layer (`cartographer_ros`, `ekf`)
 
-Configured via `stack_master/config/<NUCx>/slam/f110_2d.lua`, `f110_2d_loc.lua`.
+Configured via `supervisor/stack_master/config/<NUCx>/slam/f110_2d.lua`, `f110_2d_loc.lua`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -46,7 +46,7 @@ Configured via `stack_master/config/<NUCx>/slam/f110_2d.lua`, `f110_2d_loc.lua`.
 
 ## 3. Global Planning & Sector Velocity Layer (`global_planner`, `sector_tuner`)
 
-Configured via `stack_master/config/global_planner/racecar_f110.ini`, `global_planner_params.yaml`, `speed_scaling.yaml`.
+Configured via `supervisor/stack_master/config/global_planner/racecar_f110.ini`, `global_planner_params.yaml`, `speed_scaling.yaml`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy & Online Command |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -60,7 +60,7 @@ Configured via `stack_master/config/global_planner/racecar_f110.ini`, `global_pl
 
 ## 4. Motion Control Layer (`controller_manager`, `map`, `pp`)
 
-Configured via `stack_master/config/<NUCx>/l1_params.yaml`.
+Configured via `supervisor/stack_master/config/<NUCx>/l1_params.yaml`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy & Online Command |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -76,7 +76,7 @@ Configured via `stack_master/config/<NUCx>/l1_params.yaml`.
 
 ## 5. Perception & Opponent Tracking Layer (`perception`, `box_detector`)
 
-Configured via `stack_master/config/opponent_tracker_params.yaml`.
+Configured via `supervisor/stack_master/config/opponent_tracker_params.yaml`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy & Online Command |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -89,7 +89,7 @@ Configured via `stack_master/config/opponent_tracker_params.yaml`.
 
 ## 6. State Machine & High-Level Racing Layer (`state_machine`)
 
-Configured via `stack_master/config/state_machine_params.yaml`.
+Configured via `supervisor/stack_master/config/state_machine_params.yaml`.
 
 | Parameter Name | Target Node / File | Data Type | Default Value | Online Configurable? | Meaning & Behavior Impact | Recommended Tuning Strategy & Online Command |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |

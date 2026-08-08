@@ -20,7 +20,7 @@ Accompanying this repository, a paper titled *ForzaETH Race Stack - Scaled Auton
 
 ## Installation
 
-We provide an installation guide [here](.docker_utils/README.md). 
+We provide an installation guide [here](.devops/.docker_utils/README.md). 
 
 Or check out our [video playlist on Youtube](https://www.youtube.com/playlist?list=PLMzSGo5LtaW9cgdwHB_FnX3qlAYx7P6JI):  
 <a href="https://www.youtube.com/watch?v=A9Clg1n6rII">
@@ -37,7 +37,7 @@ Or check out our [video playlist on Youtube](https://www.youtube.com/playlist?li
 
 ## Getting started
 
-After installation, the car (or the simulation environment) is ready to be tested. For examples on how to run the different modules on the car, refer to the [`stack_master` README](./stack_master/README.md).
+After installation, the car (or the simulation environment) is ready to be tested. For examples on how to run the different modules on the car, refer to the [`stack_master` README](./supervisor/stack_master/README.md).
 
 ## Contributing
 
@@ -59,7 +59,7 @@ This project would not be possible without the use of multiple great open-source
 ### Problems
 If you are having problem with the SIM (no car/scans showing for example), try the setup once again:
 ```bash
-source ~/ws/src/race_stack/.install_utils/f110_sim_setup.sh
+source ~/ws/src/race_stack/.devops/.install_utils/f110_sim_setup.sh
 ```
 
 If your joystick is not working, try the following while the controller is connected:
