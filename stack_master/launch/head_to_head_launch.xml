@@ -22,10 +22,6 @@
         <include file="$(find-pkg-share spline_planner)/launch/spline_planner_launch.xml" />
     </group>
 
-    <!-- PREDICTIVE SPLINER -->
-    <group if="$(eval '\'$(var overtake_mode)\' == \'predictive_spliner\'')">
-        <include file="$(find-pkg-share predictive_spliner)/launch/predictive_spliner_launch.xml" />
-    </group>
 
     <!-- PERCEPTION -->
     <include file="$(find-pkg-share perception)/launch/perception_launch.xml">

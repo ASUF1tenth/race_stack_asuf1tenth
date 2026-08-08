@@ -339,13 +339,23 @@ class Detect(Node):
         T = from_vector3_msg(t.transform.translation)
         R = from_quat_msg(t.transform.rotation)
 
+        ranges = np.array(scans.ranges)
         angles = np.linspace(scans.angle_min,
                              scans.angle_max, len(scans.ranges))
-        x_laser_frame = (scans.ranges * np.cos(angles)).flatten()
-        y_laser_frame = (scans.ranges * np.sin(angles)).flatten()
-        z_laser_frame = np.zeros(len(scans.ranges))
+        
+        # Filter valid measurements (not NaN, not Inf, and within range limits)
+        valid_mask = np.isfinite(ranges) & (ranges >= scans.range_min) & (ranges <= scans.range_max)
+        ranges = ranges[valid_mask]
+        angles = angles[valid_mask]
+        
+        if len(ranges) == 0:
+            return []
+
+        x_laser_frame = (ranges * np.cos(angles)).flatten()
+        y_laser_frame = (ranges * np.sin(angles)).flatten()
+        z_laser_frame = np.zeros(len(ranges))
         # 4xN matrix
-        xyz_laser_frame = np.vstack((x_laser_frame, y_laser_frame, z_laser_frame, np.ones(len(scans.ranges))))
+        xyz_laser_frame = np.vstack((x_laser_frame, y_laser_frame, z_laser_frame, np.ones(len(ranges))))
 
         H_l2m = np.eye(4)
         H_l2m[:3, -1] = T
@@ -367,7 +377,7 @@ class Detect(Node):
 
         div_const = np.sin(d_phi) / np.sin(l - d_phi)
         for i in range(1, len(cloudPoints_list)):
-            curr_range = self.scans.ranges[i]
+            curr_range = ranges[i]
             d_max = curr_range * div_const + 3 * sigma
 
             # Distance between points does not change in map frame or laser frame.
@@ -647,12 +657,19 @@ class Detect(Node):
         self.current_stamp = self.get_clock().now().to_msg()
         try:
             transform = self.tf_buffer.lookup_transform(target_frame='map', 
-                                                        source_frame=self.scans.header.frame_id, 
-                                                        time=self.scans.header.stamp, 
-                                                        timeout=rclpy.duration.Duration(seconds=0.03))
+                                                         source_frame=self.scans.header.frame_id, 
+                                                         time=self.scans.header.stamp, 
+                                                         timeout=rclpy.duration.Duration(seconds=0.03))
         except Exception as e:
-            self.get_logger().warn(f"Could not transform between 'map' and '{scans.header.frame_id}': {e}")
-            transform = None
+            try:
+                # Fallback to the latest available transform if lookup at scan timestamp fails
+                transform = self.tf_buffer.lookup_transform(target_frame='map', 
+                                                             source_frame=self.scans.header.frame_id, 
+                                                             time=rclpy.time.Time(), 
+                                                             timeout=rclpy.duration.Duration(seconds=0.01))
+            except Exception as e2:
+                self.get_logger().warn(f"Could not transform between 'map' and '{scans.header.frame_id}' (tried scan time and latest): {e2}")
+                transform = None
 
         objects_pointcloud_list = self.scans2ObsPointCloud(scans=scans, car_s=car_s, t=transform)
         current_obstacles = self.obsPointClouds2obsArray(objects_pointcloud_list)
