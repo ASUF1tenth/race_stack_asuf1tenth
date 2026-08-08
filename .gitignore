@@ -40,6 +40,9 @@
 #vscode
 .vscode/
 
+#build logs
+log/
+
 #maps
 supervisor/stack_master/maps/*
 !supervisor/stack_master/maps/glc_ot_ez
