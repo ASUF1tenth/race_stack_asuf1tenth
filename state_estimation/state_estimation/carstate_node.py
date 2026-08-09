@@ -67,7 +67,7 @@ class Carstate(Node):
         self.gb_wpnts = data
 
     def get_slam_tf(self) -> TransformStamped:
-        trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=6.9))
+        trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=0.01))
         return trans
 
 
@@ -109,9 +109,8 @@ class Carstate(Node):
         carstate_odom_msg = Odometry()
 
         try:
-            trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=6.9))
-        except Exception as e:
-            self.get_logger().warn(f"{e}")
+            trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=0.01))
+        except Exception:
             return
 
         # build pose message
