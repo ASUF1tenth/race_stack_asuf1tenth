@@ -17,9 +17,9 @@
     <node pkg="rviz2" exec="rviz2" name="rviz2"
         args="-d $(find-pkg-share map_editor)/rviz/editor.rviz" />
 
-    <!-- Crawl backwards to find the maps in the src folder. -->
+    <!-- Use standard ROS 2 package share resolution -->
     <let name="map_src_path"
-        value="$(find-pkg-prefix stack_master)/../../src/race_stack/stack_master/maps/$(var map_name)" />
+        value="$(find-pkg-share stack_master)/maps/$(var map_name)" />
 
     <!-- Mapping but only want to get .png, .yaml and .pbstream without global waypoints calc -->
     <group if="$(var map_editor_mapping)">
