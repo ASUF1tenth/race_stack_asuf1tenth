@@ -29,21 +29,8 @@
       file="$(find-pkg-share frenet_odom_republisher)/launch/frenet_odom_republisher_launch.xml" />
   </group>
 
-  <!-- 2. Launch AutoDRIVE simulator adapter & state estimation -->
-  <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
-    <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
-    <!-- launch SE -->
-    <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
-      <arg name="racecar_version" value="$(var racecar_version)" />
-      <arg name="mapping_bool" value="False" />
-      <arg name="map_name" value="$(var map_name)" />
-      <arg name="frenet_bool" value="True" />
-    </include>
-  </group>
-
-  <!-- 3. Launch real car system -->
-  <group unless="$(var sim)">
-    <!-- launch teleop -->
+  <!-- Bringup (Teleop, Ackermann Mux, Static TFs, and Hardware Drivers if sim=False) -->
+  <group unless="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
     <group unless="$(var remote)">
       <include file="$(find-pkg-share f1tenth_stack)/launch/bringup_launch.py">
         <arg name="joy_teleop_config" value="$(var joy_teleop_config)" />
@@ -51,6 +38,7 @@
         <arg name="sensors_config" value="$(var sensors_config)" />
         <arg name="mux_config" value="$(var mux_config)" />
         <arg name="use_legacy_drivers" value="$(var use_legacy_drivers)" />
+        <arg name="sim" value="$(var sim)" />
       </include>
     </group>
     <group if="$(var remote)">
@@ -59,10 +47,18 @@
         <arg name="vesc_config" value="$(var vesc_config)" />
         <arg name="sensors_config" value="$(var sensors_config)" />
         <arg name="mux_config" value="$(var mux_config)" />
+        <arg name="sim" value="$(var sim)" />
       </include>
     </group>
+  </group>
 
-    <!-- launch SE -->
+  <!-- 2. Launch AutoDRIVE adapter if in autodrive sim -->
+  <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
+    <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
+  </group>
+
+  <!-- 3. Launch state estimation -->
+  <group unless="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
     <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
       <arg name="racecar_version" value="$(var racecar_version)" />
       <arg name="mapping_bool" value="False" />

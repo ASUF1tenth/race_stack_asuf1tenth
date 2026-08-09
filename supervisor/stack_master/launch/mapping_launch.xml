@@ -17,17 +17,8 @@
     <let name="map_src_path"
         value="$(find-pkg-prefix stack_master)/../../src/race_stack/stack_master/maps/$(var map_name)" />
 
-    <!-- 1. ON PHYSICAL SYSTEM -->
-    <group unless="$(var sim)">
-        <node pkg="global_planner" exec="global_planner" name="global_planner" output="screen">
-            <param
-                from="$(find-pkg-share stack_master)/config/global_planner/global_planner_params.yaml" />
-            <param name="map_editor" value="False" />
-            <param name="create_map" value="True" />
-            <param name="map_name" value="$(var map_name)" />
-        </node>
-
-        <!-- launch teleop -->
+    <!-- Bringup (Teleop, Ackermann Mux, Static TFs, and Hardware Drivers if sim=False) -->
+    <group unless="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
         <group unless="$(var remote)">
             <include file="$(find-pkg-share f1tenth_stack)/launch/bringup_launch.py">
                 <arg name="joy_teleop_config" value="$(var joy_teleop_config)" />
@@ -35,6 +26,7 @@
                 <arg name="sensors_config" value="$(var sensors_config)" />
                 <arg name="mux_config" value="$(var mux_config)" />
                 <arg name="use_legacy_drivers" value="$(var use_legacy_drivers)" />
+                <arg name="sim" value="$(var sim)" />
             </include>
         </group>
         <group if="$(var remote)">
@@ -43,20 +35,13 @@
                 <arg name="vesc_config" value="$(var vesc_config)" />
                 <arg name="sensors_config" value="$(var sensors_config)" />
                 <arg name="mux_config" value="$(var mux_config)" />
+                <arg name="sim" value="$(var sim)" />
             </include>
         </group>
-
-        <!-- launch SE -->
-        <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
-            <arg name="racecar_version" value="$(var racecar_version)" />
-            <arg name="mapping_bool" value="True" />
-            <arg name="map_name" value="$(var map_name)" />
-            <arg name="frenet_bool" value="False" />
-        </include>
     </group>
 
-    <!-- 2. ON AutoDRIVE SIMULATION -->
-    <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
+    <!-- 1. ON AutoDRIVE SIMULATION / PHYSICAL CAR MAPPING -->
+    <group unless="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
         <node pkg="global_planner" exec="global_planner" name="global_planner" output="screen">
             <param
                 from="$(find-pkg-share stack_master)/config/global_planner/global_planner_params.yaml" />
@@ -65,8 +50,10 @@
             <param name="map_name" value="$(var map_name)" />
         </node>
 
-        <!-- Launch AutoDRIVE adapter node -->
-        <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
+        <!-- Launch AutoDRIVE adapter if in autodrive sim -->
+        <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
+            <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
+        </group>
 
         <!-- Launch SLAM Cartographer State Estimation for mapping -->
         <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
