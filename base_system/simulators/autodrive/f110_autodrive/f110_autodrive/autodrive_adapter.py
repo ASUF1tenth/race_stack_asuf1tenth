@@ -62,6 +62,7 @@ class F110AutoDriveAdapter(Node):
         self.declare_parameter('use_kinematic_odom', True)
         self.declare_parameter('drive_topic', '/drive')
         self.declare_parameter('publish_car_state', False)  # Set to False when state_estimation (carstate_node) is running
+        self.declare_parameter('watchdog_timeout', 0.2)      # Watchdog timeout threshold in seconds
 
         # Controller tuning parameters
         self.declare_parameter('Kff_lin', 0.04)
@@ -79,6 +80,7 @@ class F110AutoDriveAdapter(Node):
         self.use_kinematic_odom = self.get_parameter('use_kinematic_odom').value
         self.drive_topic = self.get_parameter('drive_topic').value
         self.publish_car_state = self.get_parameter('publish_car_state').value
+        self.watchdog_timeout = self.get_parameter('watchdog_timeout').value
 
         self.Kff_lin = self.get_parameter('Kff_lin').value
         self.Kff_quad = self.get_parameter('Kff_quad').value
@@ -155,6 +157,7 @@ class F110AutoDriveAdapter(Node):
 
         self.last_drive_time = self.get_clock().now()
         self.in_timeout = True
+        self.watchdog_timer = self.create_timer(0.1, self.watchdog_callback)
         # TF Broadcaster for odom -> base_link (emulating vesc_to_odom_node)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
@@ -327,7 +330,7 @@ class F110AutoDriveAdapter(Node):
 
     def watchdog_callback(self):
         time_since_last_drive = (self.get_clock().now() - self.last_drive_time).nanoseconds / 1e9
-        if time_since_last_drive > 0.2:
+        if time_since_last_drive > self.watchdog_timeout:
             # Publish safe 0.0 commands (straight wheels, active braking)
             steer_msg = Float32()
             steer_msg.data = 0.0
