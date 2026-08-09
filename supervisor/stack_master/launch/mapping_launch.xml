@@ -56,7 +56,7 @@
     </group>
 
     <!-- 2. ON AutoDRIVE SIMULATION -->
-    <group if="$(eval '\'$(var sim)\' == \'True\' and \'$(var sim_type)\' == \'autodrive\'')">
+    <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
         <node pkg="global_planner" exec="global_planner" name="global_planner" output="screen">
             <param
                 from="$(find-pkg-share stack_master)/config/global_planner/global_planner_params.yaml" />
@@ -78,7 +78,7 @@
     </group>
 
     <!-- 3. ON 2D GYM SIMULATION -->
-    <group if="$(eval '\'$(var sim)\' == \'True\' and \'$(var sim_type)\' == \'gym\'')">
+    <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
         <node pkg="global_planner" exec="global_planner" name="global_planner" output="screen">
             <param
                 from="$(find-pkg-share stack_master)/config/global_planner/global_planner_params.yaml" />

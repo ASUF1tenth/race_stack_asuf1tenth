@@ -22,3 +22,7 @@ ros-jazzy-asio-cmake-module
 ros-jazzy-nav2-map-server
 ros-jazzy-nav2-lifecycle-manager
 ros-jazzy-imu-tools
+ros-jazzy-cv-bridge
+ffmpeg
+libsm6
+libxext6

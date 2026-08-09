@@ -20,7 +20,7 @@
   <let name="map_path" value="$(find-pkg-share stack_master)/maps/$(var map_name)" />
 
   <!-- 1. Launch 2D Gym simulator -->
-  <group if="$(eval '\'$(var sim)\' == \'True\' and \'$(var sim_type)\' == \'gym\'')">
+  <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
     <include file="$(find-pkg-share f1tenth_gym_ros)/launch/gym_bridge_launch.py">
       <arg name="map_yaml_path" value="$(var map_path)/$(var map_name).yaml" />
     </include>
@@ -30,7 +30,7 @@
   </group>
 
   <!-- 2. Launch AutoDRIVE simulator adapter & state estimation -->
-  <group if="$(eval '\'$(var sim)\' == \'True\' and \'$(var sim_type)\' == \'autodrive\'')">
+  <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
     <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
     <!-- launch SE -->
     <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
