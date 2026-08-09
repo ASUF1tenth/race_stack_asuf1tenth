@@ -5,8 +5,9 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan, Imu
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
-from geometry_msgs.msg import PoseStamped, Quaternion
+from geometry_msgs.msg import PoseStamped, Quaternion, TransformStamped
 from std_msgs.msg import Float32
+import tf2_ros
 
 try:
     from vesc_msgs.msg import VescImuStamped
@@ -60,6 +61,7 @@ class F110AutoDriveAdapter(Node):
         self.declare_parameter('wheelbase', 0.25)        # ~25 cm F1Tenth wheelbase
         self.declare_parameter('use_kinematic_odom', True)
         self.declare_parameter('drive_topic', '/drive')
+        self.declare_parameter('publish_car_state', False)  # Set to False when state_estimation (carstate_node) is running
 
         # Controller tuning parameters
         self.declare_parameter('Kff_lin', 0.04)
@@ -76,6 +78,7 @@ class F110AutoDriveAdapter(Node):
         self.wheelbase = self.get_parameter('wheelbase').value
         self.use_kinematic_odom = self.get_parameter('use_kinematic_odom').value
         self.drive_topic = self.get_parameter('drive_topic').value
+        self.publish_car_state = self.get_parameter('publish_car_state').value
 
         self.Kff_lin = self.get_parameter('Kff_lin').value
         self.Kff_quad = self.get_parameter('Kff_quad').value
@@ -141,9 +144,10 @@ class F110AutoDriveAdapter(Node):
         else:
             self.get_logger().warn('vesc_msgs not found. /sensors/imu (VescImuStamped) will be disabled.')
 
-        # Publishers to Autonomy Stack (Car State)
-        self.car_state_odom_pub = self.create_publisher(Odometry, '/car_state/odom', 10)
-        self.car_state_pose_pub = self.create_publisher(PoseStamped, '/car_state/pose', 10)
+        # Publishers to Autonomy Stack (Car State - optional, disabled by default to avoid collision with carstate_node)
+        if self.publish_car_state:
+            self.car_state_odom_pub = self.create_publisher(Odometry, '/car_state/odom', 10)
+            self.car_state_pose_pub = self.create_publisher(PoseStamped, '/car_state/pose', 10)
 
         # Publishers to AutoDRIVE
         self.steer_pub = self.create_publisher(Float32, '/autodrive/roboracer_1/steering_command', 10)
@@ -151,7 +155,8 @@ class F110AutoDriveAdapter(Node):
 
         self.last_drive_time = self.get_clock().now()
         self.in_timeout = True
-        self.watchdog_timer = self.create_timer(0.1, self.watchdog_callback)
+        # TF Broadcaster for odom -> base_link (emulating vesc_to_odom_node)
+        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
         self.get_logger().info(f'F1Tenth AutoDRIVE Adapter Node Initialized (use_kinematic_odom={self.use_kinematic_odom})')
 
@@ -212,14 +217,25 @@ class F110AutoDriveAdapter(Node):
         self.odom_pub.publish(odom_msg)
         self.vesc_odom_pub.publish(odom_msg)
 
-        # Republish as /car_state/odom for controller speed tracking
-        self.car_state_odom_pub.publish(odom_msg)
+        # Broadcast odom -> base_link TF transform (emulating vesc_to_odom_node)
+        tf_msg = TransformStamped()
+        tf_msg.header = odom_msg.header
+        tf_msg.child_frame_id = odom_msg.child_frame_id
+        tf_msg.transform.translation.x = odom_msg.pose.pose.position.x
+        tf_msg.transform.translation.y = odom_msg.pose.pose.position.y
+        tf_msg.transform.translation.z = odom_msg.pose.pose.position.z
+        tf_msg.transform.rotation = odom_msg.pose.pose.orientation
+        self.tf_broadcaster.sendTransform(tf_msg)
 
-        # Extract pose for /car_state/pose
-        pose_msg = PoseStamped()
-        pose_msg.header = odom_msg.header
-        pose_msg.pose = odom_msg.pose.pose
-        self.car_state_pose_pub.publish(pose_msg)
+        if self.publish_car_state:
+            # Republish as /car_state/odom for controller speed tracking
+            self.car_state_odom_pub.publish(odom_msg)
+
+            # Extract pose for /car_state/pose
+            pose_msg = PoseStamped()
+            pose_msg.header = odom_msg.header
+            pose_msg.pose = odom_msg.pose.pose
+            self.car_state_pose_pub.publish(pose_msg)
 
     def imu_callback(self, msg: Imu):
         # Forward standard IMU data with frame_id remapped to 'imu'
