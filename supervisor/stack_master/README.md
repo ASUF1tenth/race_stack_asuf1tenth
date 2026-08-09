@@ -59,7 +59,7 @@ The velocities generated from the map trajectories can be scaled down or tuned u
   ros2 param set /sector_tuner Sector0.scaling 0.2
   ```
 * **Permanent Config:**
-  Modify `src/race_stack/supervisor/stack_master/maps/<map_name>/speed_scaling.yaml` and rebuild using:
+  Modify `src/supervisor/stack_master/maps/<map_name>/speed_scaling.yaml` and rebuild using:
   ```shell
   colcon build --packages-select stack_master
   ```
