@@ -11,7 +11,7 @@ ssh -X <username>@<car_ip>
 2.  Move to the ForzaETH race stack directory, and run the `xauth_setup.sh` script:
 ```bash
 cd <racestack_directory>
-source .devops/.devcontainer/xauth_setup.sh
+source .devcontainer/xauth_setup.sh
 ```
 You should get at least the first line of the following output:
 ```
@@ -21,7 +21,7 @@ xhost:  must be on local machine to add or remove hosts.
 
 3. run the container with the appropriate script. If had you never run the container, running `main_dock.sh` should be fine, otherwise consider attaching to the already built container with `main_attach_dock.sh`.
 ```bash
-.devops/.docker_utils/main_dock.sh
+.docker_utils/main_dock.sh
 ```
 
 4. Enjoy a terminal with GUI forwarding!
@@ -39,7 +39,7 @@ ssh -X <username>@<car_ip>
 2.  Move to the ForzaETH race stack directory, and run the `xauth_setup.sh` script:
 ```bash
 cd <racestack_directory>
-source .devops/.devcontainer/xauth_setup.sh
+source .devcontainer/xauth_setup.sh
 ```
 You should get at least the first line of the following output:
 ```

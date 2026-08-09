@@ -28,7 +28,7 @@ When setting up the ROS 2 Jazzy (Ubuntu 24.04) race stack on the Jetson Nano, we
 Currently, the container runs using **CPU Software Rendering (`llvmpipe`)**. This is the safest default because the host operating system's (Ubuntu 18.04) NVIDIA graphics drivers are binary-incompatible with the container's (Ubuntu 24.04) newer system libraries. Forcing driver mounting causes the container's local graphics to crash with `Error: couldn't find RGB GLX visual`.
 
 ### How to Enable GPU Acceleration in the Future
-If the host operating system is upgraded to a newer version (like a community Ubuntu 20.04/22.04 image or JetPack 6.x on a newer Jetson board), you can enable hardware GPU acceleration by modifying [.devops/.docker_utils/main_dock.sh](../.devops/.docker_utils/main_dock.sh):
+If the host operating system is upgraded to a newer version (like a community Ubuntu 20.04/22.04 image or JetPack 6.x on a newer Jetson board), you can enable hardware GPU acceleration by modifying [.docker_utils/main_dock.sh](../.docker_utils/main_dock.sh):
 
 1.  **Modify the script to dynamically detect the NVIDIA runtime and inject environment variables:**
     ```bash
@@ -129,7 +129,7 @@ To get this distributed container architecture working successfully, keep the fo
 *   **Problem:** Nodes like `lap_analyser` crash with `PermissionError: [Errno 13] Permission denied: '/home/asuf1tenth/ws/data'`.
 *   **Cause:** Docker mounts host cache/volume directories. If those host directories did not exist, Docker (root daemon) implicitly created the host-bound volume folders (and the parent `/home/asuf1tenth/ws`) as root, blocking the non-root container user (`asuf1tenth`) from writing or creating subdirectories inside it.
 *   **Resolution:** 
-    1. **Pre-create directories:** The [.devops/.docker_utils/main_dock.sh](../.devops/.docker_utils/main_dock.sh) script now pre-creates directories (build, install, log, data) under your normal host user session *before* spinning up the container.
+    1. **Pre-create directories:** The [.docker_utils/main_dock.sh](../.docker_utils/main_dock.sh) script now pre-creates directories (build, install, log, data) under your normal host user session *before* spinning up the container.
     2. **Mount persistent data:** The script now bind-mounts `/home/$USER/ws/data` to the host directory `../cache/jazzy/data`, persisting lap logs permanently.
     3. **One-Time Cleanup:** If you already have root-owned workspace directories on the Jetson Nano host, correct their permissions once:
        ```bash

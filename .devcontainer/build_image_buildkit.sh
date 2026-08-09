@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Find the repository root dynamically (parent of .devops/.devcontainer)
+# Find the repository root dynamically (parent of .devcontainer)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$REPO_ROOT"
 
 # Force BuildKit to be used
@@ -19,4 +19,4 @@ docker build --platform linux/arm64 \
     --build-arg UID="$ACTUAL_UID" \
     --build-arg GID="$ACTUAL_GID" \
     -t nuc_forzaeth_racestack_ros2:jazzy \
-    -f .devops/.devcontainer/Dockerfile .
+    -f .devcontainer/Dockerfile .

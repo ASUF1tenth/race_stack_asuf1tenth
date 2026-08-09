@@ -2,7 +2,7 @@
 
 # Script to launch the main docker instance for the pblf110 car
 IMAGE=nuc_forzaeth_racestack_ros2
-FORZETH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+FORZETH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Pre-create cache and data directories on host to ensure correct user ownership
 mkdir -p "$FORZETH_DIR/../cache/jazzy/build"

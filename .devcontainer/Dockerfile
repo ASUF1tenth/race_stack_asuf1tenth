@@ -21,12 +21,12 @@ RUN groupadd --gid $GID $USERNAME \
 RUN apt-get update && apt-get upgrade -y
 
 # install folders are added granularly to avoid unnecessary rebuilds when developing the Dockerfile
-ADD .devops/.install_utils/linux_req/ /tmp/.install_utils/ 
+ADD .install_utils/linux_req/ /tmp/.install_utils/ 
 RUN xargs apt-get install -y < /tmp/.install_utils/linux_req.txt
 
 # separate installation is needed for quadprog because of trajectory-planning-helpers
 RUN apt-get remove python3-kiwisolver -y
-ADD .devops/.install_utils/python_req.txt /tmp/.install_utils/python_req.txt
+ADD .install_utils/python_req.txt /tmp/.install_utils/python_req.txt
 RUN pip3 install -r /tmp/.install_utils/python_req.txt --break-system-packages &&\
     pip3 install quadprog~=0.1.11 --break-system-packages
 # flag desktop-full package as manually installed (otherwise apt suggests to uninstall it)
@@ -39,7 +39,7 @@ RUN apt-get install -y ros-jazzy-desktop
 # [Optional] Set the default user. Omit if you want to keep the default as root.
 USER $USERNAME
 
-ADD .devops/.install_utils/bashrc/ /tmp/.install_utils/
+ADD .install_utils/bashrc/ /tmp/.install_utils/
 RUN echo "export USERNAME=$USERNAME" >> /home/$USERNAME/.bashrc &&\
     cat /tmp/.install_utils/.bashrc_git >> /home/$USERNAME/.bashrc &&\
     cat /tmp/.install_utils/.bashrc_forzaeth >> /home/$USERNAME/.bashrc

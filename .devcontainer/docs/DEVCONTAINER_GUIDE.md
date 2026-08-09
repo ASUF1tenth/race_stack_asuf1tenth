@@ -33,7 +33,7 @@ To use Devcontainers, install the following on your host workstation:
 1. **Set up X11 permissions on the host** (needed for RViz2 or Matplotlib GUIs to work):
    Open a terminal on your host machine **inside the workspace project folder** (the `src/` directory) and run:
    ```bash
-   source .devops/.devcontainer/xauth_setup.sh
+   source .devcontainer/xauth_setup.sh
    ```
 2. **Build the Docker Image on the Host**:
    Before opening the container in VS Code for the first time, you must build the baseline Docker image. In the same terminal (inside the `src/` directory), run:
@@ -64,8 +64,8 @@ To use Devcontainers, install the following on your host workstation:
 > 
 > **Automated Reinstallation Scripts**:
 > We have provided utility scripts in your workspace to automate the reinstallation of VS Code and Docker to bypass snap conflicts:
-> * **VS Code Reinstaller**: Run [.devops/.install_utils/reinstall_vscode_deb.sh](../.devops/.install_utils/reinstall_vscode_deb.sh) on the host to swap Snap VS Code for the native `.deb` package.
-> * **Docker Engine Reinstaller**: Run [.devops/.install_utils/reinstall_docker_apt.sh](../.devops/.install_utils/reinstall_docker_apt.sh) on the host to swap Snap Docker for the official APT engine and disable Wayland socket mounts.
+> * **VS Code Reinstaller**: Run [.install_utils/reinstall_vscode_deb.sh](../.install_utils/reinstall_vscode_deb.sh) on the host to swap Snap VS Code for the native `.deb` package.
+> * **Docker Engine Reinstaller**: Run [.install_utils/reinstall_docker_apt.sh](../.install_utils/reinstall_docker_apt.sh) on the host to swap Snap Docker for the official APT engine and disable Wayland socket mounts.
 
 ---
 
@@ -89,7 +89,7 @@ If you are running VS Code directly on your development workstation (not over SS
    Ensure you run the following in your host terminal to allow X11 connections:
    ```bash
    xhost +local:$USER
-   source .devops/.devcontainer/xauth_setup.sh
+   source .devcontainer/xauth_setup.sh
    ```
 2. **Inside the Devcontainer Terminal**:
    Export your host's display number (typically `:0`):
@@ -110,7 +110,7 @@ If your code runs on the car NUC/Pi and you connect to it remotely via VS Code S
    Initialize the Xauth file:
    ```bash
    cd /home/mohany/Projects/f1tenth/highlevel/asuf1tenth/src
-   source .devops/.devcontainer/xauth_setup.sh
+   source .devcontainer/xauth_setup.sh
    ```
 3. **Capture the Display Number**:
    Run the following inside the SSH session to get the virtual display port allocated by SSH:
@@ -141,7 +141,7 @@ This happens because the standard `opencv-python` library bundles its own pre-co
 We have configured the environment to use the **headless** version of OpenCV which skips loading these conflicting Qt binaries. Because OpenCV is only used for background mathematical operations (not window rendering) and Matplotlib handles the GUI window rendering using working system backends (like Tkinter), this does not break the planner's popups/sliders.
 
 The configuration has been modified in:
-1. [python_req.txt](file:///home/mohany/Projects/f1tenth/highlevel/asuf1tenth/src/.devops/.install_utils/python_req.txt): Replaced `opencv-python` with `opencv-python-headless`.
+1. [python_req.txt](file:///home/mohany/Projects/f1tenth/highlevel/asuf1tenth/src/.install_utils/python_req.txt): Replaced `opencv-python` with `opencv-python-headless`.
 2. [Dockerfile](file:///home/mohany/Projects/f1tenth/highlevel/asuf1tenth/src/.devcontainer/Dockerfile): Added a step to explicitly uninstall any pre-existing GUI-bound standard OpenCV libraries (`opencv-python` and `opencv-contrib-python`) before running the pip requirements install.
 
 If you hit this issue in an unbuilt or manually configured environment, run:

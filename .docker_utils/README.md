@@ -61,19 +61,19 @@ To get GUI applications (like RViz2 and Matplotlib) properly forwarded:
 2. Run the setup script to establish the container `.Xauthority` configuration:
    ```bash
    cd <race_stack folder>
-   source .devops/.devcontainer/xauth_setup.sh
+   source .devcontainer/xauth_setup.sh
    ```
 
 3. Launch the docker container in the same terminal:
    ```bash
-   ./.devops/.docker_utils/main_dock.sh
+   ./.docker_utils/main_dock.sh
    ```
 
 You will now have access to a terminal inside the container. 
 Here, run the postcreate command with the following line
 ```bash
 cd ~/ws/src/race_stack
-./.devops/.install_utils/post_create_command.sh
+./.install_utils/post_create_command.sh
 ```
 This will setup the final packages and configurations needed for the container to work correctly.
 
@@ -91,7 +91,7 @@ You can now attach multiple terminals to the container with the secondary scritp
 ```bash
 # in a terminal outside of the container
 cd <race_stack folder>
-./.devops/.docker_utils/sec_dock.sh
+./.docker_utils/sec_dock.sh
 ```
 
 Once the main docker container is closed, you can also reopen the same one with the attach script:
@@ -116,7 +116,7 @@ cd <race_stack folder>
 In case you want to use the VSCode devcontainer in a remote machine, and you want graphical application to be forwarded, you need to setup the xauth file for the container. This can be done by running the following command:
 ```bash
 cd <race_stack folder>
-source .devops/.devcontainer/xauth_setup.sh
+source .devcontainer/xauth_setup.sh
 ```
 
 Make sure to do this in a remote terminal with X forwarding enabled, as described in the [GUI applications documentation](./README_GUI.md).
@@ -187,7 +187,7 @@ You can also attach multiple terminals to the container with the secondary scrip
 ```bash
 # in a terminal outside of the container
 cd <race_stack folder>
-./.devops/.docker_utils/sec_dock.sh
+./.docker_utils/sec_dock.sh
 ```
 The name used inside the `sec_dock.sh` file must be the same as the one set in the `image` field of the `devcontainer.json` in step 3.
 
@@ -209,7 +209,7 @@ xargs sudo apt-get install -y < ~/ws/src/race_stack/.install_utils/linux_req/lin
 xargs sudo apt-get install -y < ~/ws/src/race_stack/.install_utils/linux_req/linux_req_car.txt
 
 # python dependencies
-pip install -r ~/ws/src/race_stack/.devops/.install_utils/python_req.txt --break-system-packages
+pip install -r ~/ws/src/race_stack/.install_utils/python_req.txt --break-system-packages
 
 # setup f1tenth_gym
 source ~/ws/src/race_stack/.install_utils/f110_sim_setup.sh
