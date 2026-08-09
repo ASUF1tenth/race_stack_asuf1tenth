@@ -92,11 +92,28 @@ def read_global_waypoints(map_dir: str) -> Tuple[
     - trackbounds_markers
         - from topic /trackbounds/markers: MarkerArray
     '''
-    path = os.path.join(map_dir, 'global_waypoints.json')
+    # Fall back to source directory if install share path is corrupted or invalid
+    target_map_dir = map_dir
+    target_path = os.path.join(target_map_dir, 'global_waypoints.json')
+    if not os.path.exists(target_path) or os.path.getsize(target_path) == 0:
+        p = Path(map_dir)
+        map_name = p.name
+        ws_root = p.parents[4] if len(p.parents) > 4 else p.parent
+        candidates = [
+            ws_root / 'src' / 'supervisor' / 'stack_master' / 'maps' / map_name,
+            ws_root / 'src' / 'stack_master' / 'maps' / map_name,
+            ws_root / 'src' / 'race_stack' / 'stack_master' / 'maps' / map_name
+        ]
+        for cand in candidates:
+            cand_path = cand / 'global_waypoints.json'
+            if cand_path.exists() and cand_path.stat().st_size > 0:
+                target_map_dir = str(cand)
+                target_path = str(cand_path)
+                break
 
-    print(f"[INFO] READ_GLOBAL_WAYPOINTS: Reading global waypoints from {path}")
+    print(f"[INFO] READ_GLOBAL_WAYPOINTS: Reading global waypoints from {target_path}")
     # Deserialize JSON and Reconstruct the maps elements
-    with open(path, 'r') as f:
+    with open(target_path, 'r') as f:
         d: Dict[str, List] = json.load(f)
 
     map_info_str = String()
