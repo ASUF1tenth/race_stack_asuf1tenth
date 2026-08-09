@@ -109,9 +109,9 @@ class Carstate(Node):
         carstate_odom_msg = Odometry()
 
         try:
-            trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=6.9))
+            trans = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time(), rclpy.duration.Duration(seconds=0.01))
         except Exception as e:
-            self.get_logger().warn(f"{e}")
+            self.get_logger().warn(f"TF transform between 'map' and 'base_link' unavailable: {e}", throttle_duration_sec=2.0)
             return
 
         # build pose message
