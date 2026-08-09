@@ -3,7 +3,7 @@
   <arg name="max_steer_rad" default="0.4189"/>
   <arg name="wheelbase" default="0.25"/>
   <arg name="use_kinematic_odom" default="True"/>
-  <arg name="drive_topic" default="/drive"/>
+  <arg name="drive_topic" default="/ackermann_cmd"/>
   <arg name="Kff_lin" default="0.04"/>
   <arg name="Kff_quad" default="0.000139"/>
   <arg name="K_steer" default="0.15"/>
