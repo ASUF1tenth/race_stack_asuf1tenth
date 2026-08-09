@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
 
 import os
+import numpy as np
+import scipy.spatial.distance
 import rclpy
 from rclpy.node import Node
+
+# Patch scipy.spatial.distance.euclidean for SciPy 1.14+ compatibility with trajectory_planning_helpers
+_orig_euclidean = scipy.spatial.distance.euclidean
+def _patched_euclidean(u, v, *args, **kwargs):
+    return _orig_euclidean(np.asarray(u).squeeze(), np.asarray(v).squeeze(), *args, **kwargs)
+scipy.spatial.distance.euclidean = _patched_euclidean
 from ament_index_python.packages import get_package_share_directory
 
 from f110_msgs.msg import WpntArray
