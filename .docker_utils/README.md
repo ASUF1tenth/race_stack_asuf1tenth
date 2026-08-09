@@ -77,9 +77,7 @@ cd ~/ws/src/race_stack
 ```
 This will setup the final packages and configurations needed for the container to work correctly.
 
-Once the setup is done, compile the workspace using one of these options:
-* **Option A: VS Code Devcontainer Task (Recommended)**: Press `Ctrl + Shift + B` (or select `Terminal -> Run Build Task...`) and choose your build profile (e.g., `Release`). This utilizes the pre-configured script which automatically skips the `f110_gym` python package.
-* **Option B: Manual Terminal Build**: If building inside the container terminal, run:
+Once the setup is done, you can compile the workspace using
   ```bash
   cd ~/ws
   colcon build --symlink-install --packages-ignore f110_gym
