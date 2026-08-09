@@ -73,7 +73,7 @@ You will now have access to a terminal inside the container.
 Here, run the postcreate command with the following line
 ```bash
 cd ~/ws/src/race_stack
-./.install_utils/post_create_command.sh
+./.devops/.install_utils/post_create_command.sh
 ```
 This will setup the final packages and configurations needed for the container to work correctly.
 

@@ -2,11 +2,11 @@
 	path = base_system/f1tenth_system
 	url = https://github.com/ForzaETH/f1tenth_system.git
 	branch = humble-devel
-[submodule "base_system/f110_simulator/f1tenth_gym"]
+[submodule "base_system/simulators/f110_simulator/f1tenth_gym"]
 	path = base_system/simulators/f110_simulator/f1tenth_gym
 	url = https://github.com/ForzaETH/f1tenth_gym.git
 	branch = main
-[submodule "base_system/f110_simulator/f1tenth_gym_ros"]
+[submodule "base_system/simulators/f110_simulator/f1tenth_gym_ros"]
 	path = base_system/simulators/f110_simulator/f1tenth_gym_ros
 	url = https://github.com/ForzaETH/f1tenth_gym_ros.git
 	branch = main
