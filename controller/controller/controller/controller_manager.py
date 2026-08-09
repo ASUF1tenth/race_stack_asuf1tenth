@@ -2,6 +2,7 @@ import os
 import yaml
 import rclpy
 import numpy as np
+from pathlib import Path as PyPath
 from scipy.spatial.transform import Rotation
 from rclpy.node import Node
 from rclpy.client import Client
@@ -79,6 +80,10 @@ class Controller(Node):
         self.map_path = self.get_remote_parameter('global_parameters', 'map_path')
         self.racecar_version = self.get_remote_parameter('global_parameters', 'racecar_version')
         self.sim = self.get_remote_parameter('global_parameters', 'sim')
+        try:
+            self.sim_type = self.get_remote_parameter('global_parameters', 'sim_type')
+        except Exception:
+            self.sim_type = 'autodrive'
         self.state_machine_rate = self.get_remote_parameter('state_machine', 'rate_hz')
 
         # variables
@@ -243,11 +248,42 @@ class Controller(Node):
             params.append(param)
         return params
 
+    def get_stack_master_config_path(self, filename: str) -> str:
+        """
+        Resolves config file path under stack_master.
+        First checks source tree (src/supervisor/stack_master/config), falling back to installed share path.
+        For sim:
+        - If sim_type is 'gym', looks under SIM/
+        - If sim_type is 'autodrive' (or other), looks under <racecar_version>/ (e.g. NUC2/), falling back to SIM/ if absent.
+        """
+        pkg_share = PyPath(get_package_share_directory('stack_master'))
+        ws_root = pkg_share.parents[3]
+        src_config = ws_root / 'src' / 'supervisor' / 'stack_master' / 'config'
+        config_base = src_config if src_config.exists() else (pkg_share / 'config')
+
+        sim_type_str = str(getattr(self, 'sim_type', '') or '').lower()
+        if self.sim and sim_type_str == 'gym':
+            target_subfolder = 'SIM'
+        else:
+            target_subfolder = self.racecar_version
+
+        candidate = config_base / target_subfolder / filename
+        if candidate.exists():
+            return str(candidate)
+
+        if self.sim and (config_base / 'SIM' / filename).exists():
+            return str(config_base / 'SIM' / filename)
+
+        fallback = config_base / self.racecar_version / filename
+        if fallback.exists():
+            return str(fallback)
+
+        return str(candidate)
+
     def init_map_controller(self):
 
-        # get l1 parameres
-        stack_master_path = get_package_share_directory('stack_master')
-        config_path = os.path.join(stack_master_path, 'config', self.racecar_version, 'l1_params.yaml')
+        # get l1 parameters
+        config_path = self.get_stack_master_config_path('l1_params.yaml')
         with open(config_path, 'r') as f:
             self.l1_params = yaml.safe_load(f)
             self.l1_params = self.l1_params['controller']['ros__parameters']
@@ -279,21 +315,20 @@ class Controller(Node):
         
     def init_pp_controller(self):
 
-        # get l1 parameres
-        stack_master_path = get_package_share_directory('stack_master')
-        config_path = os.path.join(stack_master_path, 'config', self.racecar_version, 'l1_params.yaml')
+        # get l1 parameters
+        config_path = self.get_stack_master_config_path('l1_params.yaml')
         with open(config_path, 'r') as f:
             self.l1_params = yaml.safe_load(f)
             self.l1_params = self.l1_params['controller']['ros__parameters']
             
         # get wheelbase
         if self.sim:
-            config_path = os.path.join(stack_master_path, 'config', self.racecar_version, 'sim_params.yaml')
+            config_path = self.get_stack_master_config_path('sim_params.yaml')
             with open(config_path, 'r') as f:
                 car_params = yaml.safe_load(f)
                 self.wheelbase = car_params['lr'] + car_params['lf']
         else:
-            config_path = os.path.join(stack_master_path, 'config', self.racecar_version, 'vesc.yaml')
+            config_path = self.get_stack_master_config_path('vesc.yaml')
             with open(config_path, 'r') as f:
                 car_params = yaml.safe_load(f)
                 self.wheelbase = car_params['vesc_to_odom_node']['ros__parameters']['wheelbase']

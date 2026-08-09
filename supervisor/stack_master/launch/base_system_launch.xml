@@ -71,6 +71,7 @@
   <node pkg="stack_master" name="global_parameters" exec="global_parameter_node">
     <param name="racecar_version" value="$(var racecar_version)" />
     <param name="sim" value="$(var sim)" />
+    <param name="sim_type" value="$(var sim_type)" />
     <param name="map_path" value="$(var map_path)" />
     <!-- Fails with l1 params for some reason
     <param from="$(find-pkg-share stack_master)/config/$(var racecar_version)/l1_params.yaml" /> -->
