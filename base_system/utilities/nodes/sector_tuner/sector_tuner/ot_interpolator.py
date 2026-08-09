@@ -32,11 +32,32 @@ class OvertakingInterpolator(Node):
         self.max_gb_speed = 10
 
         # get initial scaling
-        self.sectors_params=self.parameters_to_dict()
+        self.sectors_params = self.parameters_to_dict()
+        if 'n_sectors' not in self.sectors_params:
+            map_name = self.get_parameter('map_name').get_parameter_value().string_value if self.has_parameter('map_name') else ''
+            if map_name:
+                from .ot_sector_slicer import get_data_path
+                yaml_path = get_data_path('maps/' + map_name + '/ot_sectors.yaml')
+                if yaml_path.exists():
+                    try:
+                        with open(yaml_path, 'r') as f:
+                            data = yaml.safe_load(f)
+                            if data and 'ot_interpolator' in data and 'ros__parameters' in data['ot_interpolator']:
+                                self.sectors_params = data['ot_interpolator']['ros__parameters']
+                    except Exception as e:
+                        self.get_logger().warn(f"Failed loading ot_sectors.yaml from {yaml_path}: {e}")
+
+        if 'n_sectors' not in self.sectors_params:
+            self.sectors_params['n_sectors'] = 1
+            self.sectors_params['yeet_factor'] = 1.25
+            self.sectors_params['spline_len'] = 30
+            self.sectors_params['ot_sector_begin'] = 0.5
+            self.sectors_params['Overtaking_sector0'] = {'start': 0, 'end': 275, 'ot_flag': False}
+
         self.n_sectors = self.sectors_params['n_sectors']
         self.get_logger().info(str(self.sectors_params))
-        self.yeet_factor = self.sectors_params['yeet_factor']
-        self.spline_len = int(self.sectors_params['spline_len'])
+        self.yeet_factor = self.sectors_params.get('yeet_factor', 1.25)
+        self.spline_len = int(self.sectors_params.get('spline_len', 30))
 
         # SUBSCRIBE
         self.glb_wpnts_name = "/global_waypoints_scaled"

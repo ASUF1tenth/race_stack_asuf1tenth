@@ -12,9 +12,28 @@ from matplotlib.patches import Arrow
 
 def get_data_path(subpath=''):
     """
-    Helper function to get an absolute path to the specified (relative) path within the data folder.
+    Helper function to get an absolute path to the specified (relative) path within the stack_master folder.
+    First attempts to find stack_master in the workspace source tree, falling back to installed share directory if not found.
     """
-    return Path(get_package_share_directory('stack_master')).parents[3]/'src/race_stack/stack_master'/subpath
+    pkg_share = Path(get_package_share_directory('stack_master'))
+    ws_root = pkg_share.parents[3]
+
+    candidate_src_paths = [
+        ws_root / 'src' / 'supervisor' / 'stack_master',
+        ws_root / 'src' / 'stack_master',
+        ws_root / 'src' / 'race_stack' / 'stack_master'
+    ]
+
+    for candidate in candidate_src_paths:
+        if candidate.exists() and (candidate / 'package.xml').exists():
+            return candidate / subpath
+
+    if (ws_root / 'src').exists():
+        for p in (ws_root / 'src').rglob('stack_master'):
+            if (p / 'package.xml').exists():
+                return p / subpath
+
+    return pkg_share / subpath
 
 class OvertakingSectorSlicer(Node):
     """

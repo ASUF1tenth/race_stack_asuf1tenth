@@ -28,7 +28,26 @@ class SectorTuner(Node):
         self.glb_wpnts_sp_scaled = None
 
         # get initial scaling
-        self.sectors_params=self.parameters_to_dict()
+        self.sectors_params = self.parameters_to_dict()
+        if 'n_sectors' not in self.sectors_params:
+            map_name = self.get_parameter('map_name').get_parameter_value().string_value if self.has_parameter('map_name') else ''
+            if map_name:
+                yaml_path = get_data_path('maps/' + map_name + '/speed_scaling.yaml')
+                if yaml_path.exists():
+                    try:
+                        import yaml
+                        with open(yaml_path, 'r') as f:
+                            data = yaml.safe_load(f)
+                            if data and 'sector_tuner' in data and 'ros__parameters' in data['sector_tuner']:
+                                self.sectors_params = data['sector_tuner']['ros__parameters']
+                    except Exception as e:
+                        self.get_logger().warn(f"Failed loading speed_scaling.yaml from {yaml_path}: {e}")
+
+        if 'n_sectors' not in self.sectors_params:
+            self.sectors_params['n_sectors'] = 1
+            self.sectors_params['global_limit'] = 0.5
+            self.sectors_params['Sector0'] = {'start': 0, 'end': 275, 'scaling': 0.5}
+
         self.n_sectors = self.sectors_params['n_sectors']
         
         desc = ParameterDescriptor(type=ParameterType.PARAMETER_DOUBLE, floating_point_range=[FloatingPointRange(from_value=0.0, to_value=1.0, step=0.01)])
