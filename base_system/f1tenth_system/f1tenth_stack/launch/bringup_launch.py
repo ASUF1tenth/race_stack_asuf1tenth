@@ -22,8 +22,7 @@
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.substitutions import Command
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
@@ -75,8 +74,12 @@ def generate_launch_description():
         'use_legacy_drivers',
         default_value='False',
         description='Whether to use the legacy drivers (urg_node and standard vesc_driver)')
+    sim_la = DeclareLaunchArgument(
+        'sim',
+        default_value='False',
+        description='Whether running in simulation mode')
 
-    ld = LaunchDescription([joy_la, vesc_la, sensors_la, mux_la, use_legacy_drivers_la])
+    ld = LaunchDescription([joy_la, vesc_la, sensors_la, mux_la, use_legacy_drivers_la, sim_la])
 
     joy_node = Node(
         package='joy',
@@ -94,33 +97,36 @@ def generate_launch_description():
         package='vesc_ackermann',
         executable='ackermann_to_vesc_node',
         name='ackermann_to_vesc_node',
-        parameters=[LaunchConfiguration('vesc_config')]
+        parameters=[LaunchConfiguration('vesc_config')],
+        condition=UnlessCondition(LaunchConfiguration('sim'))
     )
     vesc_to_odom_node = Node(
         package='vesc_ackermann',
         executable='vesc_to_odom_node',
         name='vesc_to_odom_node',
-        parameters=[LaunchConfiguration('vesc_config')]
+        parameters=[LaunchConfiguration('vesc_config')],
+        condition=UnlessCondition(LaunchConfiguration('sim'))
     )
     vesc_driver_node = Node(
         package='vesc_driver',
         executable='vesc_driver_node',
         name='vesc_driver_node',
         parameters=[LaunchConfiguration('vesc_config')],
-        condition=IfCondition(LaunchConfiguration('use_legacy_drivers'))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
     )
     throttle_interpolator_node = Node(
         package='f1tenth_stack',
         executable='throttle_interpolator',
         name='throttle_interpolator',
-        parameters=[LaunchConfiguration('vesc_config')]
+        parameters=[LaunchConfiguration('vesc_config')],
+        condition=UnlessCondition(LaunchConfiguration('sim'))
     )
     urg_node = Node(
         package='urg_node',
         executable='urg_node_driver',
         name='urg_node',
         parameters=[LaunchConfiguration('sensors_config')],
-        condition=IfCondition(LaunchConfiguration('use_legacy_drivers'))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
     )
     drivers_bringup_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -133,7 +139,7 @@ def generate_launch_description():
         launch_arguments={
             'vesc_config': LaunchConfiguration('vesc_config')
         }.items(),
-        condition=UnlessCondition(LaunchConfiguration('use_legacy_drivers'))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'False'"]))
     )
     ackermann_mux_node = Node(
         package='ackermann_mux',
@@ -142,11 +148,19 @@ def generate_launch_description():
         parameters=[LaunchConfiguration('mux_config')],
         remappings=[('ackermann_cmd_out', 'ackermann_drive')]
     )
-    static_tf_node_bl = Node(
+    static_tf_node_bl_hw = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_baselink_to_laser',
-        arguments=['0.27', '0.0', '0.11', '3.14159', '0.0', '0.0', 'base_link', 'laser']
+        arguments=['0.27', '0.0', '0.11', '3.14159', '0.0', '0.0', 'base_link', 'laser'],
+        condition=UnlessCondition(LaunchConfiguration('sim'))
+    )
+    static_tf_node_bl_sim = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_baselink_to_laser',
+        arguments=['0.2733', '0.0', '0.096', '0.0', '0.0', '0.0', 'base_link', 'laser'],
+        condition=IfCondition(LaunchConfiguration('sim'))
     )
     static_tf_node_mo = Node(
         package='tf2_ros',
@@ -172,8 +186,9 @@ def generate_launch_description():
     ld.add_action(urg_node)
     ld.add_action(drivers_bringup_include)
     ld.add_action(ackermann_mux_node)
-    ld.add_action(static_tf_node_bl)
-    ld.add_action(static_tf_node_mo)
+    ld.add_action(static_tf_node_bl_hw)
+    ld.add_action(static_tf_node_bl_sim)
+    # ld.add_action(static_tf_node_mo)  # Disabled to prevent TF collision with Cartographer SLAM / localization
     ld.add_action(static_tf_node_bi)
 
     return ld
