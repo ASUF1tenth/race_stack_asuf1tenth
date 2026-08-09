@@ -180,6 +180,9 @@ Note: the full <name>:<port> couple is needed as from step 1.
 
 You can now enjoy a terminal with GUI forwarding! If you need multiple GUI applications, make sure to export the `DISPLAY` variable in each terminal you want to use GUI applications in.
 
+To build using VS Devonctainer Task, do the following:
+* Press `Ctrl + Shift + B` (or select `Terminal -> Run Build Task...`) and choose your build profile (e.g., `Release`). This utilizes the pre-configured script which automatically skips the `f110_gym` python package.
+
 **Step 5/5: Open additional terminals** 
 You can also attach multiple terminals to the container with the secondary script, from outside VSCode:
 ```bash
