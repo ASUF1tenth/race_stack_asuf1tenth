@@ -3,9 +3,13 @@ GUI applications in remote containers are a bit of a pain in the neck. Which mak
 ## GUI applications in remote Docker containers
 If you want to launch a GUI application from a remote docker container, as for example during [mapping](https://git.ee.ethz.ch/pbl/research/f1tenth2/race_stack/-/tree/master/base_system/pbl_f110_system?ref_type=heads#mapping), a couple of specific steps need to be taken. 
 
-1. Connect to a car via SSH, enabling X forwarding with the `-X` flag: 
+1. Connect to a car via SSH using one of the following commands: 
 ```bash
-ssh -X <username>@<car_ip>
+ssh -YC -o "Ciphers aes128-ctr" username@<ip_address>
+```
+OR
+```bash
+ssh -XC aes128-gcm@openssh.com username@<ip_address>
 ```
 
 2.  Move to the ForzaETH race stack directory, and run the `xauth_setup.sh` script:
