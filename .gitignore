@@ -37,9 +37,6 @@
 # py
 *.pyc
 
-#vscode
-.vscode/
-
 #build logs
 log/
 
