@@ -41,7 +41,7 @@
 log/
 
 #maps
-supervisor/stack_master/maps/*
+!supervisor/stack_master/maps/*
 !supervisor/stack_master/maps/glc_ot_ez
 !supervisor/stack_master/maps/GLC_smile_small
 !supervisor/stack_master/maps/hangar_1905_v0

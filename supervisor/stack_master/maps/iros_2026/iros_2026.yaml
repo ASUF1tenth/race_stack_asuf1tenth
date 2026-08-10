@@ -1,0 +1,9 @@
+free_thresh: 0.196
+image: iros_2026.png
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -4.522282409667969
+- -6.504336547851563
+- 0
+resolution: 0.05000000074505806
