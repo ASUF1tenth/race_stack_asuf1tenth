@@ -47,6 +47,7 @@ supervisor/stack_master/maps/*
 !supervisor/stack_master/maps/hangar_1905_v0
 !supervisor/stack_master/maps/room_loop
 !supervisor/stack_master/maps/ws_everest
+!supervisor/stack_master/maps/PP_tuning_V2
 
 .vscode/build
 .vscode/log

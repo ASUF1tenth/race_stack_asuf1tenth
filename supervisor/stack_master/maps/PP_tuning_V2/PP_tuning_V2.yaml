@@ -1,0 +1,9 @@
+free_thresh: 0.196
+image: PP_tuning_V2.png
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -3.3844551086425785
+- -2.4163475036621094
+- 0
+resolution: 0.05000000074505806
