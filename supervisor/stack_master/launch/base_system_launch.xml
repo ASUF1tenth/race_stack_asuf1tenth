@@ -52,7 +52,7 @@
     </group>
   </group>
 
-  <!-- 2. Launch AutoDRIVE adapter if in autodrive sim -->
+  <!-- 2. Launch AutoDRIVE bridge and adapter if in autodrive sim -->
   <group if="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'autodrive\'')">
     <include file="$(find-pkg-share f110_autodrive)/launch/autodrive_launch.xml" />
   </group>

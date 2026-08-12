@@ -12,7 +12,7 @@ In these cases, the Map Editor package is a convenience to allow the 2D map gene
 ### 1. Mapping
 1. First, a (baseline) map stil needs to be created. Launch it with:
     ```bash
-    ros2 launch map_editor map_editor.launch map_name:=PLACE_DAYMONTH_VN map_editor_mapping:=True racecar_version:=NUCX
+    ros2 launch map_editor map_editor_launch map_name:=PLACE_DAYMONTH_VN map_editor_mapping:=True racecar_version:=NUCX
     ```
     Replace PLACE with the place where the track is, e.g. icra or hangar.
 
