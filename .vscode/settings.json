@@ -25,4 +25,5 @@
     ],
     "editor.renderWhitespace": "trailing",
     "ROS2.distro": "humble",
+    "cmake.sourceDirectory": "/home/mohany/ws/src/race_stack/base_system/drivers/drivers_bringup",
 }

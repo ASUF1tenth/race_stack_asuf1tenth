@@ -9,7 +9,7 @@ If this returns 192.168.1.15, your network range is 192.168.1.0/24.
 ## Step 2: Fast scan the network without DNS resolution
 
 ```bash
-sudo nmap -sn -n 192.168.1.0/24
+nmap -n 192.168.1.0/24
 ```
 
 (Using sudo here is highly recommended because it allows Nmap to use raw ARP packets, making the scan incredibly fast and accurate on local networks).
