@@ -162,7 +162,7 @@ Change the `image` attribute in the devcontainer file correspondingly:
 ```json5
 //<race_stack_directory>/.devcontainer/devcontainer.json
 ...
-    "image": "nuc_forzaeth_racestack_ros2:jazzy",
+    "image": "asuf1tenth_racestack_ros2:jazzy",
 ...
 ```
 
@@ -192,7 +192,21 @@ cd <race_stack folder>
 ```
 The name used inside the `sec_dock.sh` file must be the same as the one set in the `image` field of the `devcontainer.json` in step 3.
 
+## Troubleshooting Build & Network Issues
+
+### Matplotlib Build & `qhull.org` Download Failure
+* **Symptom:** Docker container build fails during `pip3 install -r python_req.txt` with:
+  ```text
+  ERROR: Could not build wheels for matplotlib...
+  Failed to download any of the following: ['http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz']
+  ```
+* **Cause:** Building legacy Matplotlib versions from source requires downloading the `qhull` dependency live over plain HTTP from `qhull.org`. If your ISP or home network router blocks unencrypted HTTP downloads, or if DNS resolution fails for `qhull.org`, `pip` fails to compile Matplotlib.
+* **Workaround / Solution:**
+  1. **Flush DNS Cache & Restart Router:** If `qhull.org` fails to resolve on your home Wi-Fi (but works on mobile data), flush your DNS cache (`sudo resolvectl flush-caches` on Linux, `ipconfig /flushdns` on Windows), switch DNS to Google (`8.8.8.8`) or Cloudflare (`1.1.1.1`), and restart your home router.
+  2. **Alternative:** If building on a modern OS / Python 3.12, install pre-built binary wheels directly (`pip install matplotlib>=3.8.0`) to avoid needing to compile legacy C source code over HTTP.
+
 ## How to use GUI applications with the container
+
 To have more information on how to use GUI applications with remote containers, please refer to the [GUI applications documentation](./README_GUI.md).
 
 ---

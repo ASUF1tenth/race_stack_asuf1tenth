@@ -18,5 +18,5 @@ docker build --platform linux/arm64 \
     --build-arg USERNAME="$ACTUAL_USER" \
     --build-arg UID="$ACTUAL_UID" \
     --build-arg GID="$ACTUAL_GID" \
-    -t nuc_forzaeth_racestack_ros2:jazzy \
+    -t asuf1tenth_racestack_ros2:jazzy \
     -f .devcontainer/Dockerfile .

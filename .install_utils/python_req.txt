@@ -5,7 +5,7 @@ opencv-python-headless==4.11.0.86
 casadi
 pynput
 pandas 
-matplotlib>=3.8.0
+matplotlib~=3.5.1
 numba
 filterpy
 tqdm
@@ -34,4 +34,3 @@ python-socketio
 python-engineio
 gevent
 gevent-websocket
-

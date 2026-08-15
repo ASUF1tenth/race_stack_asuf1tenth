@@ -1,6 +1,5 @@
-version: '3.3'
 services:
-  nuc:
+  racestack:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
@@ -8,4 +7,4 @@ services:
         - USERNAME=${USER}
         - UID=${UID}
         - GID=${GID}
-    image: nuc_forzaeth_racestack_ros2:jazzy
+    image: asuf1tenth_racestack_ros2:jazzy

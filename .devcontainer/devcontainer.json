@@ -2,7 +2,7 @@
     "name": "ForzaETH Race Stack Jazzy",
     "privileged": true,
     "remoteUser": "${localEnv:USER}",
-    "image": "nuc_forzaeth_racestack_ros2:jazzy",
+    "image": "asuf1tenth_racestack_ros2:jazzy",
     "initializeCommand": "/bin/bash -c 'mkdir -p ${localWorkspaceFolder}/../cache/jazzy/{build,install,log,data} && source ${localWorkspaceFolder}/.devcontainer/xauth_setup.sh'",
     "workspaceFolder": "/home/${localEnv:USER}/ws/src/race_stack/",
     "workspaceMount": "source=${localWorkspaceFolder},target=/home/${localEnv:USER}/ws/src/race_stack,type=bind",
