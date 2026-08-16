@@ -47,9 +47,9 @@ POSE_GRAPH.optimize_every_n_nodes = 5
 POSE_GRAPH.global_sampling_ratio = 0.05
 POSE_GRAPH.constraint_builder.sampling_ratio = 0.05
 
-TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 0.2 * TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 0.5 * TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight
 
-TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 0.2 * TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 0.4 * TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight
 
 POSE_GRAPH.optimization_problem.odometry_rotation_weight = 0
 POSE_GRAPH.optimization_problem.odometry_translation_weight = 0
