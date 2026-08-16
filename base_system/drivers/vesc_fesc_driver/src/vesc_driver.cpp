@@ -66,15 +66,15 @@ VescDriver::VescDriver(const rclcpp::NodeOptions & options)
   fw_version_minor_(-1)
 {
   // get vesc serial port address
-  std::string port = declare_parameter<std::string>("port", "");
+  port_ = declare_parameter<std::string>("port", "");
 
   // attempt to connect to the serial port
   try {
-    vesc_.connect(port);
-  } catch (SerialException e) {
-    RCLCPP_FATAL(get_logger(), "Failed to connect to the VESC, %s.", e.what());
-    rclcpp::shutdown();
-    return;
+    vesc_.connect(port_);
+  } catch (const SerialException & e) {
+    RCLCPP_WARN(
+      get_logger(), "Initial connection to VESC serial port %s failed (%s). Retrying automatically...",
+      port_.c_str(), e.what());
   }
 
   // create vesc state (telemetry) publisher
@@ -122,10 +122,22 @@ VescDriver::VescDriver(const rclcpp::NodeOptions & options)
 
 void VescDriver::timerCallback()
 {
-  // VESC interface should not unexpectedly disconnect, but test for it anyway
+  // If disconnected, attempt auto-reconnection continuously
   if (!vesc_.isConnected()) {
-    RCLCPP_FATAL(get_logger(), "Unexpectedly disconnected from serial port.");
-    rclcpp::shutdown();
+    auto & clk = *this->get_clock();
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), clk, 2000,
+      "Disconnected from serial port (%s). Attempting auto-reconnect...", port_.c_str());
+    try {
+      vesc_.connect(port_);
+      RCLCPP_INFO(get_logger(), "Successfully reconnected to VESC/FSESC on port %s", port_.c_str());
+      driver_mode_ = MODE_INITIALIZING;
+      fw_version_major_ = -1;
+      fw_version_minor_ = -1;
+    } catch (const SerialException & e) {
+      // Still disconnected, try again on next timer callback
+      return;
+    }
     return;
   }
 
