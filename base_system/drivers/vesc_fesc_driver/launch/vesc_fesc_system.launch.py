@@ -125,6 +125,8 @@ def generate_launch_description():
         package='vesc_fesc_driver',
         executable='vesc_fesc_bridge.py',
         name='vesc_fesc_bridge',
+        respawn=True,
+        respawn_delay=2.0,
         output='screen'
     )
 

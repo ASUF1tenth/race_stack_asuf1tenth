@@ -51,6 +51,8 @@ def launch_setup(context, *args, **kwargs):
         name=node_name_val,
         namespace=namespace_val,
         parameters=params,
+        respawn=True,
+        respawn_delay=2.0,
         output="screen"
     )
     return [node]

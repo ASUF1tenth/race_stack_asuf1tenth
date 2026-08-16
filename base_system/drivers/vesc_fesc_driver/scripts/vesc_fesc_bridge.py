@@ -26,6 +26,12 @@ class VescFescBridge(Node):
         super().__init__('vesc_fesc_bridge')
         self.get_logger().info('Initializing VESC/FESC Topic Bridge Node...')
 
+        # Watchdog and connection state tracking
+        self.last_fesc_msg_time = None
+        self.last_vesc_msg_time = None
+        self.fesc_connected = False
+        self.vesc_connected = False
+
         # --- Subscriptions to Global Commands -> Publish to Namespaces ---
         self.cmd_speed_sub = self.create_subscription(
             Float64,
@@ -148,6 +154,9 @@ class VescFescBridge(Node):
             10
         )
 
+        # Watchdog timer running at 1Hz to monitor driver connection state
+        self.watchdog_timer = self.create_timer(1.0, self.watchdog_callback)
+
         self.get_logger().info('VESC/FESC Topic Bridge Node is running and routing messages.')
 
     # --- Callbacks for Commands Routing ---
@@ -171,25 +180,60 @@ class VescFescBridge(Node):
 
     # --- Callbacks for Sensors Routing ---
     def sensor_core_callback(self, msg):
+        now = self.get_clock().now()
+        self.last_fesc_msg_time = now
+        if not self.fesc_connected:
+            self.fesc_connected = True
+            self.get_logger().info('FESC driver telemetry stream connected.')
         self.sensor_core_pub.publish(msg)
 
     def sensor_imu_callback(self, msg):
         self.sensor_imu_pub.publish(msg)
 
     def sensor_imu_raw_callback(self, msg):
+        now = self.get_clock().now()
+        self.last_vesc_msg_time = now
+        if not self.vesc_connected:
+            self.vesc_connected = True
+            self.get_logger().info('VESC driver IMU telemetry stream connected.')
         self.sensor_imu_raw_pub.publish(msg)
 
     def sensor_servo_pos_callback(self, msg):
+        self.sensor_servo_pos_callback_internal(msg)
+
+    def sensor_servo_pos_callback_internal(self, msg):
         self.sensor_servo_pos_pub.publish(msg)
+
+    def watchdog_callback(self):
+        now = self.get_clock().now()
+        timeout_duration = rclpy.duration.Duration(seconds=3.0)
+
+        # Check FESC status
+        if self.last_fesc_msg_time is not None:
+            if (now - self.last_fesc_msg_time) > timeout_duration:
+                if self.fesc_connected:
+                    self.fesc_connected = False
+                    self.get_logger().warn('FESC driver telemetry stream lost. Bridge active and waiting for reconnection...')
+
+        # Check VESC status
+        if self.last_vesc_msg_time is not None:
+            if (now - self.last_vesc_msg_time) > timeout_duration:
+                if self.vesc_connected:
+                    self.vesc_connected = False
+                    self.get_logger().warn('VESC driver telemetry stream lost. Bridge active and waiting for reconnection...')
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = VescFescBridge()
     try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
+        while rclpy.ok():
+            try:
+                rclpy.spin(node)
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                node.get_logger().error(f'Spin exception caught in VESC/FESC bridge: {e}')
     finally:
         node.destroy_node()
         if rclpy.ok():
@@ -201,3 +245,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
