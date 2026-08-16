@@ -4,5 +4,5 @@
 
 docker exec --tty \
     --interactive \
-    nuc_forzaeth_racestack_ros2_jazzy \
+    asuf1tenth_racestack_ros2_jazzy \
     /bin/bash
