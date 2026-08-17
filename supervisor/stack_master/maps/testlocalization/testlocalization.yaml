@@ -1,0 +1,9 @@
+free_thresh: 0.196
+image: testlocalization.png
+negate: 0
+occupied_thresh: 0.65
+origin:
+- -4.734767913818359
+- -7.362760925292969
+- 0
+resolution: 0.05000000074505806
