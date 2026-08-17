@@ -22,7 +22,7 @@ MOVE_BINDINGS = {
     ',': (-1.0, 0.0),  # Reverse
     '.': (-1.0, -1.0), # Reverse Right
     'm': (-1.0, 1.0),  # Reverse Left
-    'k': (0.0, 0.0),   # Stop
+    'k': (0.0, 0.0),   # Stop & Yield to Controller
 }
 
 SPEED_BINDINGS = {
@@ -43,10 +43,10 @@ COLOR_CYAN = "\033[1;36m"
 COLOR_BOLD = "\033[1m"
 
 
-class KillSwitchTeleopNode(Node):
+class KeyboardTeleopNode(Node):
 
     def __init__(self):
-        super().__init__('kill_switch_teleop')
+        super().__init__('keyboard_teleop')
 
         self.declare_parameter('topic_name', '/teleop')
         self.declare_parameter('max_speed', 2.0)
@@ -67,6 +67,10 @@ class KillSwitchTeleopNode(Node):
         # Motion state
         self.target_linear = 0.0
         self.target_angular = 0.0
+        self.last_key_time = self.get_clock().now()
+        self.is_teleop_active = False
+        self.key_timeout = 0.6  # seconds after which teleop yields control to /drive
+        self.stop_packets_left = 0
 
         # Emergency Kill Switch State
         self.is_killed = False
@@ -86,24 +90,45 @@ class KillSwitchTeleopNode(Node):
         timer_period = 1.0 / self.repeat_rate if self.repeat_rate > 0 else 0.05
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
-        self.get_logger().info(f"Kill Switch Teleop Node started on {self.topic_name} at {self.repeat_rate} Hz.")
+        self.get_logger().info(f"Keyboard Teleop Node started on {self.topic_name} at {self.repeat_rate} Hz.")
 
     def cmd_vel_callback(self, msg: Twist):
         """Called when /cmd_vel receives a message (used in passthrough mode)."""
         if not self.is_killed and self.mode == 'passthrough':
             self.target_linear = msg.linear.x
             self.target_angular = msg.angular.z
+            self.last_key_time = self.get_clock().now()
+            if abs(msg.linear.x) > 0.001 or abs(msg.angular.z) > 0.001:
+                self.is_teleop_active = True
+            else:
+                self.is_teleop_active = False
+                self.stop_packets_left = 2
 
     def timer_callback(self):
-        """Continuously streams AckermannDriveStamped messages to /teleop at repeat_rate Hz."""
+        """Streams AckermannDriveStamped messages to /teleop when active or killed."""
         drive = AckermannDriveStamped()
         drive.header.stamp = self.get_clock().now().to_msg()
 
         if self.is_killed:
-            # Emergency Stop Signal: Force speed=0 and steering=0
+            # Emergency Stop Signal: Force speed=0 and steering=0 continuously
             drive.drive.speed = 0.0
             drive.drive.steering_angle = 0.0
-        else:
+            self.pub_teleop.publish(drive)
+            return
+
+        # Send brief stop packets after pressing 'k' or stopping
+        if self.stop_packets_left > 0:
+            drive.drive.speed = 0.0
+            drive.drive.steering_angle = 0.0
+            self.pub_teleop.publish(drive)
+            self.stop_packets_left -= 1
+            return
+
+        # Check key press timeout
+        now = self.get_clock().now()
+        elapsed = (now - self.last_key_time).nanoseconds / 1e9
+
+        if self.is_teleop_active and elapsed <= self.key_timeout:
             # Normal velocity conversion with safety max bounds clamping
             speed = self.target_linear * self.speed_scale * self.max_speed
             if speed > 0:
@@ -119,8 +144,10 @@ class KillSwitchTeleopNode(Node):
 
             drive.drive.speed = float(speed)
             drive.drive.steering_angle = float(steering)
-
-        self.pub_teleop.publish(drive)
+            self.pub_teleop.publish(drive)
+        else:
+            # Inactive: Stop publishing to /teleop so ackermann_mux times out (0.2s) and yields control to /drive
+            self.is_teleop_active = False
 
     def print_status(self):
         """Prints terminal banner and instructions."""
@@ -133,7 +160,10 @@ class KillSwitchTeleopNode(Node):
             print(f"\n   STATUS:  {COLOR_RED_BG}  🚨 EMERGENCY KILL SWITCH ENGAGED - CAR HALTED  {COLOR_RESET}\n")
             print(f"   {COLOR_YELLOW}Press [SPACEBAR] to DISENGAGE Kill Switch and resume control.{COLOR_RESET}")
         else:
-            print(f"\n   STATUS:  {COLOR_GREEN_BG}  ✅ RELEASED - TELEOP / NAVIGATION ACTIVE  {COLOR_RESET}\n")
+            if self.is_teleop_active:
+                print(f"\n   STATUS:  {COLOR_GREEN_BG}  🎮 MANUAL TELEOP ACTIVE  {COLOR_RESET}\n")
+            else:
+                print(f"\n   STATUS:  {COLOR_GREEN_BG}  🤖 RELEASED - AUTONOMOUS CONTROLLER ACTIVE (/drive)  {COLOR_RESET}\n")
             print(f"   {COLOR_YELLOW}Press [SPACEBAR] to IMMEDIATELY ENGAGE EMERGENCY KILL SWITCH.{COLOR_RESET}")
 
         print("-" * 65)
@@ -143,7 +173,7 @@ class KillSwitchTeleopNode(Node):
         print("      m    ,    .               q/z : increase/decrease both")
         print()
         print("   Key details:")
-        print("   - 'i': Forward        - ',': Reverse        - 'k': Stop motion")
+        print("   - 'i': Forward        - ',': Reverse        - 'k': Stop & Yield to Controller")
         print("   - 'j': Left           - 'l': Right          - 'u'/'o': Fwd L/R")
         print("   - 'm'/'.': Rev L/R    - [SPACEBAR]: Toggle Emergency Kill Switch")
         print("   - CTRL-C to quit")
@@ -181,7 +211,7 @@ def get_key(tty_device, settings):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = KillSwitchTeleopNode()
+    node = KeyboardTeleopNode()
 
     tty_device = get_tty_device()
 
@@ -225,9 +255,18 @@ def main(args=None):
             if key == ' ':
                 # Toggle Emergency Kill Switch
                 node.is_killed = not node.is_killed
+                node.is_teleop_active = False
                 if node.is_killed:
                     node.target_linear = 0.0
                     node.target_angular = 0.0
+                node.print_status()
+
+            elif key == 'k':
+                # Stop teleop motion and yield control back to autonomous /drive controller
+                node.target_linear = 0.0
+                node.target_angular = 0.0
+                node.is_teleop_active = False
+                node.stop_packets_left = 2
                 node.print_status()
 
             elif key in MOVE_BINDINGS:
@@ -235,6 +274,8 @@ def main(args=None):
                 if not node.is_killed:
                     node.target_linear = lin
                     node.target_angular = ang
+                    node.last_key_time = node.get_clock().now()
+                    node.is_teleop_active = True
                 node.print_status()
 
             elif key in SPEED_BINDINGS:

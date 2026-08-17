@@ -28,6 +28,19 @@
             }
         },
         {
+            "label": "Build stack_master",
+            "detail": "Builds only stack_master package with --symlink-install",
+            "type": "shell",
+            "command": "cd ../../; colcon build --packages-select stack_master --symlink-install",
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
             "label": "Clean Workspace",
             "detail": "Run colcon clean",
             "type": "shell",
@@ -46,13 +59,18 @@
         {
             "id": "packages",
             "type": "promptString",
-            "description" : "Name of package to build",
+            "description": "Name of package to build"
         },
         {
-            "id" : "build-type",
+            "id": "build-type",
             "type": "pickString",
             "description": "Choose between debug and release build modes",
-            "options": ["Debug", "Release", "Debug no-symlink", "Release no-symlink"],
+            "options": [
+                "Debug",
+                "Release",
+                "Debug no-symlink",
+                "Release no-symlink"
+            ],
             "default": "Release"
         }
     ]

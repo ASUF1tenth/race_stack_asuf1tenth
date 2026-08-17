@@ -72,6 +72,12 @@ ros2 launch stack_master time_trials_launch.xml racecar_version:=<NUCx used> LU_
   - `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `controller/system_identification/steering_lookup/cfg` folder.
   - `<control algorithm>` is the control algorithm you want to use. Current possibilities are MAP / PP.
 
+#### Example Command 
+
+```shell
+ros2 launch stack_master time_trials_launch.xml racecar_version:=NUC2 ctrl_algo:=PP
+```
+
 #### Speed Scaling / Velocity Tuning
 The velocities generated from the map trajectories can be scaled down or tuned using the `sector_tuner` node parameters.
 

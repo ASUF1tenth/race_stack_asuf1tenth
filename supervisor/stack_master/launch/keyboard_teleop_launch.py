@@ -32,11 +32,11 @@ def generate_launch_description():
         description='Whether to launch standard ROS teleop_twist_keyboard alongside kill_switch_node'
     )
 
-    # 1. Primary Interactive Kill Switch & Keyboard Teleop Node
-    interactive_kill_switch_node = Node(
+    # 1. Primary Interactive Keyboard Teleop & Kill Switch Node
+    interactive_keyboard_teleop_node = Node(
         package='stack_master',
-        executable='kill_switch_node',
-        name='kill_switch_teleop',
+        executable='keyboard_teleop',
+        name='keyboard_teleop',
         output='screen',
         emulate_tty=True,
         parameters=[{
@@ -62,11 +62,11 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('use_standard_teleop'))
     )
 
-    # 3. Optional: Passthrough Kill Switch Node when standard teleop is active
-    passthrough_kill_switch_node = Node(
+    # 3. Optional: Passthrough Keyboard Teleop Node when standard teleop is active
+    passthrough_keyboard_teleop_node = Node(
         package='stack_master',
-        executable='kill_switch_node',
-        name='kill_switch_interceptor',
+        executable='keyboard_teleop',
+        name='keyboard_teleop_interceptor',
         output='screen',
         emulate_tty=True,
         parameters=[{
@@ -85,7 +85,7 @@ def generate_launch_description():
         max_steering_arg,
         topic_name_arg,
         use_standard_teleop_arg,
-        interactive_kill_switch_node,
+        interactive_keyboard_teleop_node,
         standard_teleop_node,
-        passthrough_kill_switch_node,
+        passthrough_keyboard_teleop_node,
     ])
