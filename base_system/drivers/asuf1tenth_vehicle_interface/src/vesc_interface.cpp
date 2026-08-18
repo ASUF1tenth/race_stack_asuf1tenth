@@ -82,7 +82,20 @@ void VescInterface::Impl::packet_creation_thread()
 {
   static auto temp_buffer = Buffer(2048, 0);
   while (packet_thread_run_) {
-    const auto bytes_read = serial_driver_->port()->receive(temp_buffer);
+    size_t bytes_read = 0;
+    try {
+      bytes_read = serial_driver_->port()->receive(temp_buffer);
+    } catch (const std::exception & e) {
+      if (error_handler_) {
+        error_handler_(std::string("Serial read error: ") + e.what());
+      }
+      try {
+        if (serial_driver_->port()->is_open()) {
+          serial_driver_->port()->close();
+        }
+      } catch (...) {}
+      break;
+    }
     buffer_.reserve(buffer_.size() + temp_buffer.size());
     buffer_.insert(buffer_.end(), temp_buffer.begin(), temp_buffer.begin() + bytes_read);
     int bytes_needed = VescFrame::VESC_MIN_FRAME_SIZE;
@@ -197,6 +210,13 @@ void VescInterface::connect(const std::string & port)
     throw SerialException("Already connected to serial port.");
   }
 
+  if (impl_->packet_thread_ && impl_->packet_thread_->joinable()) {
+    impl_->packet_thread_run_ = false;
+    try {
+      impl_->packet_thread_->join();
+    } catch (...) {}
+  }
+
   // connect to serial port
   try {
     impl_->connect(port);
@@ -220,9 +240,17 @@ void VescInterface::disconnect()
   if (isConnected()) {
     // bring down read thread
     impl_->packet_thread_run_ = false;
-    requestFWVersion();
-    impl_->packet_thread_->join();
-    impl_->serial_driver_->port()->close();
+    try {
+      requestFWVersion();
+    } catch (...) {}
+    if (impl_->packet_thread_ && impl_->packet_thread_->joinable()) {
+      try {
+        impl_->packet_thread_->join();
+      } catch (...) {}
+    }
+    try {
+      impl_->serial_driver_->port()->close();
+    } catch (...) {}
   }
 }
 
@@ -238,7 +266,20 @@ bool VescInterface::isConnected() const
 
 void VescInterface::send(const VescPacket & packet)
 {
-  impl_->serial_driver_->port()->async_send(packet.frame());
+  try {
+    if (isConnected()) {
+      impl_->serial_driver_->port()->async_send(packet.frame());
+    }
+  } catch (const std::exception & e) {
+    if (impl_->error_handler_) {
+      impl_->error_handler_(std::string("Serial send error: ") + e.what());
+    }
+    try {
+      if (impl_->serial_driver_->port()->is_open()) {
+        impl_->serial_driver_->port()->close();
+      }
+    } catch (...) {}
+  }
 }
 
 void VescInterface::requestFWVersion()
