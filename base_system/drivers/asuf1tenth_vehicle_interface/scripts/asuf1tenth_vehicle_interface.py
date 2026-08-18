@@ -32,7 +32,7 @@ import serial.tools.list_ports
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, LaserScan
 from vesc_msgs.msg import VescStateStamped
 
 
@@ -48,6 +48,7 @@ class AsuF1tenthVehicleInterface(Node):
         self.declare_parameter('imu_frame_id', 'imu_link')
         self.declare_parameter('imu_topic', 'sensors/imu/raw')
         self.declare_parameter('servo_cmd_topic', 'commands/servo/position')
+        self.declare_parameter('lidar_topic', 'scan')
         self.declare_parameter('imu_cov_z', 0.0001)
 
         self.esp_port = self.get_parameter('esp_port').get_parameter_value().string_value
@@ -55,7 +56,12 @@ class AsuF1tenthVehicleInterface(Node):
         self.imu_frame_id = self.get_parameter('imu_frame_id').get_parameter_value().string_value
         self.imu_topic = self.get_parameter('imu_topic').get_parameter_value().string_value
         self.servo_cmd_topic = self.get_parameter('servo_cmd_topic').get_parameter_value().string_value
+        self.lidar_topic = self.get_parameter('lidar_topic').get_parameter_value().string_value
         self.imu_cov_z = self.get_parameter('imu_cov_z').get_parameter_value().double_value
+
+        # --- Connection State Flags ---
+        self.fesc_connected = False
+        self.lidar_connected = False
 
         # --- Serial Connection & Threading ---
         self.serial_conn = None
@@ -146,6 +152,35 @@ class AsuF1tenthVehicleInterface(Node):
             'sensors/core',
             10
         )
+        # Also publish on /vesc/sensors/core for legacy nodes (e.g. state_machine battery check)
+        self.sensor_core_vesc_pub = self.create_publisher(
+            VescStateStamped,
+            '/vesc/sensors/core',
+            10
+        )
+
+        # --- Servo Telemetry Feedback for Odometry (vesc_to_odom) ---
+        self.servo_sensor_pub = self.create_publisher(
+            Float64,
+            'sensors/servo_position_command',
+            10
+        )
+        self.last_servo_cmd = Float64()
+        self.last_servo_cmd.data = 0.5  # Neutral center default
+
+        # Periodic timer (20 Hz) to keep servo feedback alive for vesc_to_odom
+        self.servo_feedback_timer = self.create_timer(0.05, self.publish_servo_feedback)
+
+        # --- LiDAR Monitor Subscription ---
+        self.lidar_sub = self.create_subscription(
+            LaserScan,
+            self.lidar_topic,
+            self.lidar_scan_callback,
+            10
+        )
+
+        # Check hardware port availability on startup
+        self.check_hardware_devices()
 
         # Start Serial Reader Thread for ESP32 IMU Stream
         self.reader_thread = threading.Thread(target=self.serial_read_loop, daemon=True)
@@ -154,6 +189,18 @@ class AsuF1tenthVehicleInterface(Node):
         self.get_logger().info(
             f'ASU F1TENTH Vehicle Interface active. ESP32 on {self.esp_port} @ {self.esp_baudrate} baud.'
         )
+
+    def check_hardware_devices(self):
+        fesc_exists = os.path.exists('/dev/fesc')
+        lidar_exists = os.path.exists('/dev/rplidar')
+        esp_exists = os.path.exists(self.esp_port)
+
+        status = []
+        status.append(f"ESP32: {self.esp_port} [{'FOUND' if esp_exists else 'SEARCHING'}]")
+        status.append(f"FESC: /dev/fesc [{'FOUND' if fesc_exists else 'NOT FOUND'}]")
+        status.append(f"LiDAR: /dev/rplidar [{'FOUND' if lidar_exists else 'NOT FOUND'}]")
+
+        self.get_logger().info("Hardware Port Check: " + " | ".join(status))
 
     # --- ESP32 Serial Communication Loop ---
     def resolve_port(self, target_port):
@@ -238,10 +285,17 @@ class AsuF1tenthVehicleInterface(Node):
             except Exception as e:
                 self.get_logger().error(f'Unexpected error in serial thread: {e}')
 
+    # --- Servo Feedback Loop ---
+    def publish_servo_feedback(self):
+        self.servo_sensor_pub.publish(self.last_servo_cmd)
+
     # --- Servo Command Callback ---
     def servo_cmd_callback(self, msg: Float64):
         # Clamp command to [0.0, 1.0]
         norm_val = max(0.0, min(1.0, float(msg.data)))
+        self.last_servo_cmd.data = norm_val
+        self.servo_sensor_pub.publish(self.last_servo_cmd)
+
         cmd_str = f"{norm_val:.3f}\n"
 
         with self.serial_lock:
@@ -268,7 +322,20 @@ class AsuF1tenthVehicleInterface(Node):
         self.cmd_position_pub.publish(msg)
 
     def sensor_core_callback(self, msg):
+        if not self.fesc_connected:
+            self.fesc_connected = True
+            self.get_logger().info(
+                f'FESC connected & active on /fesc/sensors/core (Battery: {msg.state.voltage_input:.2f} V)'
+            )
         self.sensor_core_pub.publish(msg)
+        self.sensor_core_vesc_pub.publish(msg)
+
+    def lidar_scan_callback(self, msg):
+        if not self.lidar_connected:
+            self.lidar_connected = True
+            self.get_logger().info(
+                f'SLLiDAR connected & active on {self.lidar_topic} (Frame: {msg.header.frame_id}, Beams: {len(msg.ranges)})'
+            )
 
     def destroy_node(self):
         self.running = False

@@ -3,10 +3,10 @@
 # ==============================================================================
 
 # 1. ESP32-C3 SuperMini (IMU Gyro Telemetry & Steering Servo PWM)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", MODE="0666", GROUP="dialout", SYMLINK+="esp"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", MODE="0777", GROUP="dialout", SYMLINK+="esp"
 
 # 2. FESC / Flipsky VESC (BLDC Traction Motor Controller)
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0666", GROUP="dialout", SYMLINK+="fesc"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE="0777", GROUP="dialout", SYMLINK+="fesc"
 
-# 3. SLLiDAR / RPLiDAR (Laser Rangefinder)
-KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0666", GROUP="dialout", SYMLINK+="rplidar"
+# 3. SLLiDAR / RPLiDAR (Laser Rangefinder - CP210x USB UART)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", MODE="0777", GROUP="dialout", SYMLINK+="rplidar"
