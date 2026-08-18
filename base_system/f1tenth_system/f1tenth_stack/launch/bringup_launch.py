@@ -74,12 +74,16 @@ def generate_launch_description():
         'use_legacy_drivers',
         default_value='False',
         description='Whether to use the legacy drivers (urg_node and standard vesc_driver)')
+    remote_la = DeclareLaunchArgument(
+        'remote',
+        default_value='False',
+        description='Whether running in remote/split-hardware mode (drivers run on car, stack runs on remote laptop)')
     sim_la = DeclareLaunchArgument(
         'sim',
         default_value='False',
         description='Whether running in simulation mode')
 
-    ld = LaunchDescription([joy_la, vesc_la, sensors_la, mux_la, use_legacy_drivers_la, sim_la])
+    ld = LaunchDescription([joy_la, vesc_la, sensors_la, mux_la, use_legacy_drivers_la, remote_la, sim_la])
 
     joy_node = Node(
         package='joy',
@@ -112,7 +116,7 @@ def generate_launch_description():
         executable='vesc_driver_node',
         name='vesc_driver_node',
         parameters=[LaunchConfiguration('vesc_config')],
-        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('remote'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
     )
     throttle_interpolator_node = Node(
         package='f1tenth_stack',
@@ -126,7 +130,7 @@ def generate_launch_description():
         executable='urg_node_driver',
         name='urg_node',
         parameters=[LaunchConfiguration('sensors_config')],
-        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('remote'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'True'"]))
     )
     drivers_bringup_include = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -139,7 +143,7 @@ def generate_launch_description():
         launch_arguments={
             'vesc_config': LaunchConfiguration('vesc_config')
         }.items(),
-        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'False'"]))
+        condition=IfCondition(PythonExpression(["'", LaunchConfiguration('sim'), "' == 'False' and '", LaunchConfiguration('remote'), "' == 'False' and '", LaunchConfiguration('use_legacy_drivers'), "' == 'False'"]))
     )
     ackermann_mux_node = Node(
         package='ackermann_mux',
@@ -152,7 +156,7 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_baselink_to_laser',
-        arguments=['0.27', '0.0', '0.11', '3.14159', '0.0', '0.0', 'base_link', 'laser'],
+        arguments=['0.27', '0.0', '0.11', '0.0', '0.0', '0.0', 'base_link', 'laser'],
         condition=UnlessCondition(LaunchConfiguration('sim'))
     )
     static_tf_node_bl_sim = Node(

@@ -17,27 +17,17 @@
     <let name="map_src_path"
         value="$(find-pkg-prefix stack_master)/../../src/supervisor/stack_master/maps/$(var map_name)" />
 
-    <!-- Bringup (Teleop, Ackermann Mux, Static TFs, and Hardware Drivers if sim=False) -->
+    <!-- Bringup (Teleop, Ackermann Mux, Static TFs, and Hardware Drivers if sim=False and remote=False) -->
     <group unless="$(eval '\'$(var sim)\' in [\'True\', \'true\', \'1\'] and \'$(var sim_type)\' == \'gym\'')">
-        <group unless="$(var remote)">
-            <include file="$(find-pkg-share f1tenth_stack)/launch/bringup_launch.py">
-                <arg name="joy_teleop_config" value="$(var joy_teleop_config)" />
-                <arg name="vesc_config" value="$(var vesc_config)" />
-                <arg name="sensors_config" value="$(var sensors_config)" />
-                <arg name="mux_config" value="$(var mux_config)" />
-                <arg name="use_legacy_drivers" value="$(var use_legacy_drivers)" />
-                <arg name="sim" value="$(var sim)" />
-            </include>
-        </group>
-        <group if="$(var remote)">
-            <include file="$(find-pkg-share f1tenth_stack)/launch/bringup_remote_launch.py">
-                <arg name="joy_teleop_config" value="$(var joy_teleop_config)" />
-                <arg name="vesc_config" value="$(var vesc_config)" />
-                <arg name="sensors_config" value="$(var sensors_config)" />
-                <arg name="mux_config" value="$(var mux_config)" />
-                <arg name="sim" value="$(var sim)" />
-            </include>
-        </group>
+        <include file="$(find-pkg-share f1tenth_stack)/launch/bringup_launch.py">
+            <arg name="joy_teleop_config" value="$(var joy_teleop_config)" />
+            <arg name="vesc_config" value="$(var vesc_config)" />
+            <arg name="sensors_config" value="$(var sensors_config)" />
+            <arg name="mux_config" value="$(var mux_config)" />
+            <arg name="remote" value="$(var remote)" />
+            <arg name="use_legacy_drivers" value="$(var use_legacy_drivers)" />
+            <arg name="sim" value="$(var sim)" />
+        </include>
     </group>
 
     <!-- 1. ON AutoDRIVE SIMULATION / PHYSICAL CAR MAPPING -->
