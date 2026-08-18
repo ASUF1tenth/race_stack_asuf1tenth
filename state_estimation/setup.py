@@ -23,6 +23,9 @@ setup(
     license='MIT',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['carstate_node = state_estimation.carstate_node:main'],
+        'console_scripts': [
+            'carstate_node = state_estimation.carstate_node:main',
+            'cartographer_initial_pose_bridge = state_estimation.cartographer_initial_pose_bridge:main',
+        ],
     },
 )

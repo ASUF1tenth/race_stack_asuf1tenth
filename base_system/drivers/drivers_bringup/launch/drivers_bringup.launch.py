@@ -8,12 +8,12 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    vesc_driver_share = get_package_share_directory('vesc_fesc_driver')
+    asuf1tenth_vehicle_interface_share = get_package_share_directory('asuf1tenth_vehicle_interface')
     sllidar_ros2_share = get_package_share_directory('sllidar_ros2')
 
     # Launch Configurations
     fesc_port = LaunchConfiguration('fesc_port')
-    vesc_port = LaunchConfiguration('vesc_port')
+    esp_port = LaunchConfiguration('esp_port')
     vesc_config = LaunchConfiguration('vesc_config')
 
     channel_type = LaunchConfiguration('channel_type')
@@ -26,17 +26,17 @@ def generate_launch_description():
     # Declare Launch Arguments
     declare_fesc_port_arg = DeclareLaunchArgument(
         'fesc_port',
-        default_value='/dev/ttyACM0',
+        default_value='/dev/fesc',
         description='Serial port for FESC (BLDC motor control)'
     )
 
-    declare_vesc_port_arg = DeclareLaunchArgument(
-        'vesc_port',
-        default_value='/dev/ttyACM1',
-        description='Serial port for VESC (Servo control and IMU)'
+    declare_esp_port_arg = DeclareLaunchArgument(
+        'esp_port',
+        default_value='/dev/esp',
+        description='Serial port for ESP32 (Steering Servo control and IMU telemetry)'
     )
 
-    default_vesc_config = os.path.join(vesc_driver_share, 'params', 'vesc_config.yaml')
+    default_vesc_config = os.path.join(asuf1tenth_vehicle_interface_share, 'params', 'vesc_config.yaml')
     declare_vesc_config_arg = DeclareLaunchArgument(
         'vesc_config',
         default_value=default_vesc_config,
@@ -51,8 +51,8 @@ def generate_launch_description():
 
     declare_serial_port_arg = DeclareLaunchArgument(
         'serial_port',
-        default_value='/dev/ttyUSB0',
-        description='Serial port for SLLiDAR A1'
+        default_value='/dev/rplidar',
+        description='Serial port for SLLiDAR A1 (/dev/rplidar or /dev/ttyUSB0)'
     )
 
     declare_serial_baudrate_arg = DeclareLaunchArgument(
@@ -79,14 +79,14 @@ def generate_launch_description():
         description='Enable angle compensation for LiDAR scan'
     )
 
-    # 1. Include VESC / FESC drivers launch file
-    vesc_fesc_launch = IncludeLaunchDescription(
+    # 1. Include Vehicle Interface & Drivers launch file (runs FESC + asuf1tenth_vehicle_interface)
+    esp_fesc_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(vesc_driver_share, 'launch', 'vesc_fesc_drivers.launch.py')
+            os.path.join(asuf1tenth_vehicle_interface_share, 'launch', 'asuf1tenth_vehicle_interface.launch.py')
         ),
         launch_arguments={
             'fesc_port': fesc_port,
-            'vesc_port': vesc_port,
+            'esp_port': esp_port,
             'config': vesc_config,
         }.items()
     )
@@ -108,7 +108,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_fesc_port_arg,
-        declare_vesc_port_arg,
+        declare_esp_port_arg,
         declare_vesc_config_arg,
         declare_channel_type_arg,
         declare_serial_port_arg,
@@ -116,6 +116,6 @@ def generate_launch_description():
         declare_frame_id_arg,
         declare_inverted_arg,
         declare_angle_compensate_arg,
-        vesc_fesc_launch,
+        esp_fesc_launch,
         sllidar_a1_launch,
     ])

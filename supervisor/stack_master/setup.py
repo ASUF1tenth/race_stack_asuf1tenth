@@ -43,6 +43,7 @@ setup(
         'console_scripts': [
             'global_parameter_node = stack_master.global_parameter_node:main',
             'keyboard_control = stack_master.keyboard_control:main',
+            'keyboard_teleop = stack_master.keyboard_teleop:main',
         ],
     },
 )

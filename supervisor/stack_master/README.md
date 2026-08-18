@@ -5,7 +5,7 @@ Additional documentation:
 - [`CONFIGURABLE_PARAMETERS.md`](./CONFIGURABLE_PARAMETERS.md) — full reference of all tunable parameters (drivers, SLAM, global planning, control, perception, state machine) with live-tuning commands.
 - [`MAPPING_AND_FILTERING_TUNING.md`](./MAPPING_AND_FILTERING_TUNING.md) — diagnosis and fixes for map "leaks" and the `create_map` / `map_editor` modes.
 
-### Mapping (on the real car)
+## Mapping
 Run the mapping launch file, specifying the map name and the NUCX version:
 ```shell
 ros2 launch stack_master mapping_launch.xml racecar_version:=<NUCX used> map_name:=<map name of choice> [remote:=true/false] [use_legacy_drivers:=true/false] [sim:=true/false] [sim_type:=autodrive/gym]
@@ -13,9 +13,22 @@ ros2 launch stack_master mapping_launch.xml racecar_version:=<NUCX used> map_nam
   - `<map name of choice>` can be any name with no white space. Conventionally we use the location name (eg, 'hangar', 'ETZ', 'icra') followed by the day of the month followed by an incremental version number. For instance, `glc_ot_ez`. (Note: Make sure that the map's folder has `speed_scaling.yaml` and `ot_sectors.yaml` files availalbe)
   - `<NUCX>` depends on which car you are using. Parameters are available for NUC2, NUC5, NUC6, SIM (the latter represents a dummy car).
   - `remote` (optional, default `false`): set to `true` if you are using a split-hardware setup where `vesc_driver` and the LiDAR node are running directly on the Raspberry Pi 4, and only the mapping/estimation stack is running on your remote laptop.
-  - `use_legacy_drivers` (optional, default `false`): set to `true` if you want to use the legacy driver stack (Hokuyo `urg_node` and single standard `vesc_driver`) instead of the default `drivers_bringup` (RPLiDAR and dual motor VESC/FESC setup).
+  - `use_legacy_drivers` (optional, default `false`): set to `true` if you want to use the legacy driver stack (Hokuyo `urg_node` and single standard `vesc_driver`) instead of the default `drivers_bringup` (RPLiDAR and ESP32/FESC vehicle interface setup).
   - `sim` (optional, default `false`): set to `true` to map in a simulator instead of on the real car.
   - `sim_type` (optional, default `autodrive`): simulator backend used when `sim:=true`. Either `autodrive` (AutoDRIVE RoboRacer) or `gym` (F1TENTH Gym).
+
+  #### Example Command (Sim)
+```shell
+ros2 launch stack_master mapping_launch.xml racecar_version:=NUC2 sim:=true sim_type:=autodrive map_name:=map
+```
+
+#### Example Command (Real Car)
+
+```shell
+ros2 launch stack_master mapping_launch.xml racecar_version:=NUC2 map_name:=map
+```
+
+Use Whichever is appropriate for your usage.
 
 > [!IMPORTANT]
 > **Mapping Best Practices & Initial Pose Alignment:**
@@ -29,7 +42,7 @@ Be careful as once a sector is chosen it cannot be further subdivided.
 
 From here on, remember to `source` the ROS 2 workspace in any new terminal.
 
-### Base System
+## Base System
 ```shell
 ros2 launch stack_master base_system_launch.xml map_name:=<name of mapped track> sim:=<true/false> racecar_version:=<NUCX used> [remote:=true/false] [use_legacy_drivers:=true/false] [sim_type:=autodrive/gym]
 ```
@@ -37,11 +50,21 @@ ros2 launch stack_master base_system_launch.xml map_name:=<name of mapped track>
   - `<true/false>` is a boolean value that indicates if you want to run the simulation or the real car. 
   - `<NUCX>` depends on which car you are using. Parameters are available for NUC2, NUC5, NUC6, SIM (the latter represents a dummy car).
   - `remote` (optional, default `false`): set to `true` if you are using a split-hardware setup where VESC and LiDAR nodes are launched directly on the Pi, and only the control/localization nodes are run on the remote laptop.
-  - `use_legacy_drivers` (optional, default `false`): set to `true` if you want to use the legacy driver stack (Hokuyo `urg_node` and single standard `vesc_driver`) instead of the default `drivers_bringup` (RPLiDAR and dual motor VESC/FESC setup).
+  - `use_legacy_drivers` (optional, default `false`): set to `true` if you want to use the legacy driver stack (Hokuyo `urg_node` and single standard `vesc_driver`) instead of the default `drivers_bringup` (RPLiDAR and ESP32/FESC vehicle interface setup).
   - `sim_type` (optional, default `autodrive`): simulator backend used when `sim:=true`. Either `autodrive` (AutoDRIVE RoboRacer) or `gym` (F1TENTH Gym).
 
+#### Example command (Sim)
+```shell
+ros2 launch stack_master base_system_launch.xml map_name:=map sim:=true racecar_version:=NUC2 sim_type:=autodrive 
+```
 
-### Time trials 
+#### Example Command (Real car)
+```shell
+ros2 launch stack_master base_system_launch.xml  map_name:=map racecar_version:=NUC2
+```
+
+
+## Time trials 
 ```shell
 ros2 launch stack_master time_trials_launch.xml racecar_version:=<NUCx used> LU_table:=<Look-Up Table name> ctrl_algo:=<control algorithm> 
 ```
@@ -49,7 +72,13 @@ ros2 launch stack_master time_trials_launch.xml racecar_version:=<NUCx used> LU_
   - `<Look-Up Table name>` is the name of the Look-Up Table you want to use. It must belong to the list of Look-Up Tables available in the `controller/system_identification/steering_lookup/cfg` folder.
   - `<control algorithm>` is the control algorithm you want to use. Current possibilities are MAP / PP.
 
-### Speed Scaling / Velocity Tuning
+#### Example Command 
+
+```shell
+ros2 launch stack_master time_trials_launch.xml racecar_version:=NUC2 ctrl_algo:=PP
+```
+
+#### Speed Scaling / Velocity Tuning
 The velocities generated from the map trajectories can be scaled down or tuned using the `sector_tuner` node parameters.
 
 * **Live Tuning (Dynamic):**
