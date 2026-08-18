@@ -1,18 +1,31 @@
 # drivers_bringup
 
-ROS 2 launch aggregator for F1TENTH low-level hardware drivers. Provides a single entry point to bring up all onboard hardware:
+ROS 2 launch aggregator for ASU F1TENTH low-level hardware drivers. Provides a single entry point to bring up all onboard hardware:
 
-- **VESC/FESC** -- BLDC drive motor and steering servo + IMU (via serial)
-- **SLLiDAR A1** -- 2D laser scan data (via serial)
+- **ESP32-C3 & FESC (`asuf1tenth_vehicle_interface`)** — High-rate MPU6500 IMU $v_z$ telemetry, 14-bit steering servo PWM, and BLDC traction motor control.
+- **SLLiDAR A1 (`sllidar_ros2`)** — 2D laser scan rangefinder.
 
-## Dependencies
+---
 
-| Package | Purpose |
-|---|---|
-| `vesc_driver` | Motor/servo/IMU driver |
-| `sllidar_ros2` | Slamtec SLLiDAR A1 driver |
+## Hardware Setup & Udev Rules (One-Time Setup)
+
+Before running the driver stack, install the hardware udev rules on the host OS so persistent symlinks (`/dev/esp`, `/dev/fesc`, and `/dev/rplidar`) are created automatically:
+
+```bash
+# Run from drivers_bringup package directory:
+./scripts/create_udev_rules.sh
+```
+
+Check that the symlinks are active:
+```bash
+ls -l /dev/esp /dev/fesc /dev/rplidar
+```
+
+---
 
 ## Usage
+
+Bring up all vehicle drivers with default persistent ports:
 
 ```bash
 ros2 launch drivers_bringup drivers_bringup.launch.py
@@ -22,23 +35,19 @@ ros2 launch drivers_bringup drivers_bringup.launch.py
 
 | Argument | Default | Description |
 |---|---|---|
-| `fesc_port` | `/dev/ttyACM0` | FESC (BLDC motor) serial port |
-| `vesc_port` | `/dev/ttyACM1` | VESC (servo + IMU) serial port |
-| `vesc_config` | *(vesc_driver default)* | Path to VESC configuration YAML |
-| `channel_type` | `serial` | SLLiDAR connection type |
-| `serial_port` | `/dev/ttyUSB0` | SLLiDAR serial port |
+| `esp_port` | `/dev/esp` | ESP32 (Steering Servo + IMU) serial port |
+| `fesc_port` | `/dev/fesc` | FESC (BLDC motor) serial port |
+| `serial_port` | `/dev/rplidar` | SLLiDAR serial port |
 | `serial_baudrate` | `115200` | SLLiDAR baud rate |
 | `frame_id` | `laser` | TF frame ID for scan data |
 | `inverted` | `false` | Invert scan data |
 | `angle_compensate` | `true` | Enable angle compensation |
+| `vesc_config` | *(asuf1tenth_vehicle_interface default)* | Path to VESC configuration YAML |
 
-Override any argument at launch time:
+Override arguments if needed:
 
 ```bash
-ros2 launch drivers_bringup drivers_bringup.launch.py \
-  fesc_port:=/dev/ttyACM2 \
-  serial_port:=/dev/ttyUSB1 \
-  frame_id:=laser_link
+ros2 launch drivers_bringup drivers_bringup.launch.py esp_port:=/dev/ttyACM0 fesc_port:=/dev/ttyACM1
 ```
 
 ## License

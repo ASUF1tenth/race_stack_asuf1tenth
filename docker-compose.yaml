@@ -8,3 +8,9 @@ services:
         - UID=${UID}
         - GID=${GID}
     image: asuf1tenth_racestack_ros2:jazzy
+    privileged: true
+    network_mode: host
+    ipc: host
+    volumes:
+      - /dev:/dev
+      - .:/workspace/asuf1tenth_ws
