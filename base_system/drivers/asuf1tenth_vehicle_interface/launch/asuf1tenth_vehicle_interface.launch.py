@@ -35,7 +35,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{
             'esp_port': esp_port_val,
             'esp_baudrate': 115200,
-            'imu_frame_id': 'imu_link',
+            'imu_frame_id': 'imu',
             'imu_topic': 'sensors/imu/raw',
             'servo_cmd_topic': 'commands/servo/position',
             'imu_cov_z': 0.0001,

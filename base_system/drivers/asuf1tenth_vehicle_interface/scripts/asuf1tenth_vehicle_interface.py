@@ -45,7 +45,7 @@ class AsuF1tenthVehicleInterface(Node):
         # --- Parameters ---
         self.declare_parameter('esp_port', '/dev/esp')
         self.declare_parameter('esp_baudrate', 115200)
-        self.declare_parameter('imu_frame_id', 'imu_link')
+        self.declare_parameter('imu_frame_id', 'imu')
         self.declare_parameter('imu_topic', 'sensors/imu/raw')
         self.declare_parameter('servo_cmd_topic', 'commands/servo/position')
         self.declare_parameter('lidar_topic', 'scan')
