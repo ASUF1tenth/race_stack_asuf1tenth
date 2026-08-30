@@ -3,6 +3,8 @@
   <arg name="racecar_version" default="$(env RACECAR_VERSION)" description="'SIM' / 'NUCx'" />
   <arg name="map_name" default="latest" description="Map name in stack_master/maps" />
   <arg name="sim" default="False" description="True/False if you want to run simulation" />
+  <arg name="autodrive" default="False" description="True to run against the AutoDRIVE RoboRacer simulator instead of gym-sim or real hardware" />
+  <arg name="autodrive_mapping" default="False" description="True to run Cartographer in mapping mode when autodrive:=True" />
   <arg name="loc_algorithm" default="slam" description="'slam' / 'synpf' to switch localisation algorithm" />
 
   <!-- Note: This is merely the share path (read-only) as the base_system
@@ -18,8 +20,19 @@
     <include file="$(find-pkg-share frenet_odom_republisher)/launch/frenet_odom_republisher_launch.xml" />
   </group>
 
+  <!-- launch against the AutoDRIVE RoboRacer simulator -->
+  <group if="$(var autodrive)">
+    <include file="$(find-pkg-share stack_master)/launch/autodrive_launch.xml">
+      <arg name="racecar_version" value="$(var racecar_version)" />
+      <arg name="map_name" value="$(var map_name)" />
+      <arg name="mapping_bool" value="$(var autodrive_mapping)" />
+      <arg name="frenet_bool" value="True" />
+    </include>
+  </group>
+
   <!-- launch real car system -->
   <group unless="$(var sim)">
+  <group unless="$(var autodrive)">
     <!-- launch teleop stack -->
     <include file="$(find-pkg-share stack_master)/launch/teleop_launch.xml">
       <arg name="racecar_version" value="$(var racecar_version)" />
@@ -32,6 +45,7 @@
       <arg name="map_name" value="$(var map_name)" />
       <arg name="frenet_bool" value="True" />
     </include>
+  </group>
   </group>
 
   <!-- launch global parameter node -->

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="racecar_version" default="NUC2" description="SLAM tuning config to reuse (stack_master/config/&lt;version&gt;/slam)"/>
+    <arg name="map_name" default="Porto" description="Map name in stack_master/maps"/>
+    <arg name="mapping_bool" default="False" description="True to run Cartographer in mapping mode, False for localization against a saved map"/>
+    <arg name="frenet_bool" default="True"/>
+
+    <!-- AutoDRIVE RoboRacer simulator bridge (Socket.IO <-> ROS 2), unmodified package -->
+    <include file="$(find-pkg-share autodrive_roboracer)/launch/bringup_headless.launch.py"/>
+
+    <!-- Translate AutoDRIVE bridge topics to ForzaETH stack topic conventions.
+         Only consumes runtime-permitted AutoDRIVE topics (lidar, imu, encoders,
+         steering feedback), never odom/ips/tf/lap/collision. -->
+    <node pkg="autodrive_bridge_adapter" name="autodrive_bridge_adapter" exec="autodrive_bridge_adapter_node" output="screen"/>
+
+    <!-- Static sensor mounts, matching AutoDRIVE's roboracer_1 vehicle-frame geometry.
+         Published as one combined broadcast (not three separate static_transform_publisher
+         processes) so a late-joining tf listener is guaranteed to see all three. -->
+    <node pkg="autodrive_bridge_adapter" exec="autodrive_static_frames_node" name="autodrive_static_frames" output="screen"/>
+
+    <!-- State estimation: EKF (encoder-derived odom + imu) + Cartographer SLAM (lidar) -->
+    <include file="$(find-pkg-share state_estimation)/launch/state_estimation_launch.xml">
+        <arg name="racecar_version" value="$(var racecar_version)"/>
+        <arg name="mapping_bool" value="$(var mapping_bool)"/>
+        <arg name="map_name" value="$(var map_name)"/>
+        <arg name="frenet_bool" value="$(var frenet_bool)"/>
+    </include>
+</launch>
