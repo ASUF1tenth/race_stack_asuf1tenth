@@ -1,0 +1,15 @@
+.git
+build/
+install/
+log/
+data/
+docs/
+tmp/
+cache/
+autodrive_devkit/
+.devcontainer/
+.vscode/
+*.bag
+*.mp4
+__pycache__/
+*.pyc

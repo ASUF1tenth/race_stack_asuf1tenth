@@ -9,7 +9,7 @@ options = {
   published_frame = "base_link",  --Change to "odom" for REP105 compliance (but worse performance)
   odom_frame = "odom",
   provide_odom_frame = false,
-  use_odometry = true,
+  use_odometry = false,
   use_nav_sat = false,
   num_laser_scans = 1,
   num_multi_echo_laser_scans = 0,
@@ -41,6 +41,8 @@ TRAJECTORY_BUILDER_2D.min_range = 0.1
 -- see: http://google-cartographer-ros.readthedocs.io/en/latest/tuning.html
 TRAJECTORY_BUILDER_2D.submaps.num_range_data = 100
 POSE_GRAPH.optimize_every_n_nodes = 20
+POSE_GRAPH.constraint_builder.max_constraint_distance = 30.
+POSE_GRAPH.global_sampling_ratio = 0.01
 
 TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight = 0.2 * TRAJECTORY_BUILDER_2D.ceres_scan_matcher.rotation_weight
 
