@@ -200,14 +200,4 @@ Once the map folder is complete, no other change is needed to ship — `map_name
 submission image and re-run the Quickstart above to confirm before pushing.
 
 ## Uncommitted work — commit this before/when handing off
-
-These exist in the working tree but aren't committed yet:
-- `submission/Dockerfile`, `submission/autodrive_devkit.sh`, `.dockerignore` (untracked —
-  the entire submission container setup)
-- `stack_master/config/NUC2/slam/f110_2d.lua` (modified — the Cartographer tuning above)
-- `stack_master/maps/iros2026_practice/` is **not tracked by git at all** — this repo's
-  `.gitignore` excludes `stack_master/maps/*` by default (only two other maps are
-  explicitly allow-listed). Once this map is finished, either add an allow-list entry for
-  it in `.gitignore` (same pattern as the existing ones) or it will never get committed.
-- `docs/Competition_Rules.md` — copied in from the old workspace so it travels with the
-  branch; untracked until committed.
+- All Done ✔️
