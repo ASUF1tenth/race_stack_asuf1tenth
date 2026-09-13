@@ -172,12 +172,19 @@ def generate_launch_description():
         name='static_map_to_odom',
         arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'map', 'odom']
     )
-    static_tf_node_bi = Node(
+    static_tf_node_bi_hw = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_baselink_to_imu',
-        # arguments=['0.07', '0.0', '0.05', '0.0', '0.0', '0.7071068', '0.7071068', 'base_link', 'imu']
-        arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '1.0', 'base_link', 'imu']
+        arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', '1.0', 'base_link', 'imu'],
+        condition=UnlessCondition(LaunchConfiguration('sim'))
+    )
+    static_tf_node_bi_sim = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_baselink_to_imu',
+        arguments=['0.08', '0.0', '0.055', '0.0', '0.0', '0.0', '1.0', 'base_link', 'imu_link'],
+        condition=IfCondition(LaunchConfiguration('sim'))
     )
 
     # finalize
@@ -193,6 +200,7 @@ def generate_launch_description():
     ld.add_action(static_tf_node_bl_hw)
     ld.add_action(static_tf_node_bl_sim)
     # ld.add_action(static_tf_node_mo)  # Disabled to prevent TF collision with Cartographer SLAM / localization
-    ld.add_action(static_tf_node_bi)
+    ld.add_action(static_tf_node_bi_hw)
+    ld.add_action(static_tf_node_bi_sim)
 
     return ld

@@ -2,7 +2,8 @@
 import math
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import LaserScan, Imu
+from rclpy.time import Time
+from sensor_msgs.msg import LaserScan, Imu, JointState
 from nav_msgs.msg import Odometry
 from ackermann_msgs.msg import AckermannDriveStamped
 from geometry_msgs.msg import PoseStamped, Quaternion, TransformStamped
@@ -14,6 +15,11 @@ try:
     HAS_VESC_MSGS = True
 except ImportError:
     HAS_VESC_MSGS = False
+
+
+def unwrap_delta(delta):
+    """Unwrap angle delta to [-pi, pi] to handle phase wrap discontinuities."""
+    return (delta + math.pi) % (2.0 * math.pi) - math.pi
 
 
 def euler_from_quaternion(q):
@@ -58,7 +64,8 @@ class F110AutoDriveAdapter(Node):
 
         # Declare parameters
         self.declare_parameter('max_steer_rad', 0.4189)  # ~24 degrees
-        self.declare_parameter('wheelbase', 0.25)        # ~25 cm F1Tenth wheelbase
+        self.declare_parameter('wheelbase', 0.324)        # 32.4 cm AutoDRIVE RoboRacer wheelbase
+        self.declare_parameter('wheel_radius', 0.059)     # 5.9 cm wheel radius
         self.declare_parameter('use_kinematic_odom', True)
         self.declare_parameter('drive_topic', '/drive')
         self.declare_parameter('publish_car_state', False)  # Set to False when state_estimation (carstate_node) is running
@@ -77,6 +84,7 @@ class F110AutoDriveAdapter(Node):
 
         self.max_steer_rad = self.get_parameter('max_steer_rad').value
         self.wheelbase = self.get_parameter('wheelbase').value
+        self.wheel_radius = self.get_parameter('wheel_radius').value
         self.use_kinematic_odom = self.get_parameter('use_kinematic_odom').value
         self.drive_topic = self.get_parameter('drive_topic').value
         self.publish_car_state = self.get_parameter('publish_car_state').value
@@ -94,28 +102,31 @@ class F110AutoDriveAdapter(Node):
 
         self.current_speed = 0.0
         self.current_steering_angle = 0.0
+        self.has_steering_feedback = False
         self.I_accum = 0.0
         self.last_callback_time = None
         self.last_error = 0.0
         self.d_error_filtered = 0.0
 
+        # Encoder & kinematic state tracking
+        self.last_left_angle = None
+        self.last_left_stamp = None
+        self.last_right_angle = None
+        self.last_right_stamp = None
+        self.left_wheel_speed = 0.0
+        self.right_wheel_speed = 0.0
+
         # Kinematic odometry state variables
         self.odom_x = 0.0
         self.odom_y = 0.0
         self.odom_yaw = 0.0
-        self.last_odom_time = None
+        self.last_kinematic_time = None
 
-        # Subscriptions from AutoDRIVE
+        # Common subscriptions from AutoDRIVE
         self.lidar_sub = self.create_subscription(
             LaserScan,
             '/autodrive/roboracer_1/lidar',
             self.lidar_callback,
-            10
-        )
-        self.odom_sub = self.create_subscription(
-            Odometry,
-            '/autodrive/roboracer_1/odom',
-            self.odom_callback,
             10
         )
         self.imu_sub = self.create_subscription(
@@ -124,6 +135,43 @@ class F110AutoDriveAdapter(Node):
             self.imu_callback,
             10
         )
+
+        if self.use_kinematic_odom:
+            # Submission-compliant mode: wheel encoders and steering feedback only
+            self.left_encoder_sub = self.create_subscription(
+                JointState,
+                '/autodrive/roboracer_1/left_encoder',
+                self.left_encoder_callback,
+                10
+            )
+            self.right_encoder_sub = self.create_subscription(
+                JointState,
+                '/autodrive/roboracer_1/right_encoder',
+                self.right_encoder_callback,
+                10
+            )
+            self.steering_sub = self.create_subscription(
+                Float32,
+                '/autodrive/roboracer_1/steering',
+                self.steering_callback,
+                10
+            )
+            self.get_logger().info(
+                f'AutoDRIVE Adapter: KINEMATIC ODOM mode (submission compliant). '
+                f'Subscribed to encoders & steering. Wheelbase={self.wheelbase}m, Radius={self.wheel_radius}m'
+            )
+        else:
+            # Debug / Training mode: simulator ground truth odometry
+            self.odom_sub = self.create_subscription(
+                Odometry,
+                '/autodrive/roboracer_1/odom',
+                self.odom_callback,
+                10
+            )
+            self.get_logger().info(
+                'AutoDRIVE Adapter: GROUND TRUTH ODOM mode (debug/training). '
+                'Subscribed to /autodrive/roboracer_1/odom.'
+            )
 
         # Subscription from Autonomy Stack
         self.drive_sub = self.create_subscription(
@@ -168,27 +216,60 @@ class F110AutoDriveAdapter(Node):
         msg.header.frame_id = 'laser'
         self.scan_pub.publish(msg)
 
-    def odom_callback(self, msg: Odometry):
-        # Read actual forward speed from simulator odometry
-        v = msg.twist.twist.linear.x
+    def _compute_wheel_speed(self, current_angle, stamp, last_angle, last_stamp):
+        if last_angle is None or last_stamp is None:
+            return None
+        dt = (Time.from_msg(stamp) - Time.from_msg(last_stamp)).nanoseconds / 1e9
+        if dt <= 0.0 or dt > 0.5:
+            return None
+        d_theta = unwrap_delta(current_angle - last_angle)
+        return (d_theta / dt) * self.wheel_radius
+
+    def left_encoder_callback(self, msg: JointState):
+        if not msg.position:
+            return
+        angle = msg.position[0]
+        speed = self._compute_wheel_speed(angle, msg.header.stamp, self.last_left_angle, self.last_left_stamp)
+        self.last_left_angle = angle
+        self.last_left_stamp = msg.header.stamp
+
+        if speed is not None:
+            self.left_wheel_speed = speed
+            self.update_kinematic_odometry(msg.header.stamp)
+
+    def right_encoder_callback(self, msg: JointState):
+        if not msg.position:
+            return
+        angle = msg.position[0]
+        speed = self._compute_wheel_speed(angle, msg.header.stamp, self.last_right_angle, self.last_right_stamp)
+        self.last_right_angle = angle
+        self.last_right_stamp = msg.header.stamp
+
+        if speed is not None:
+            self.right_wheel_speed = speed
+
+    def steering_callback(self, msg: Float32):
+        self.current_steering_angle = msg.data
+        self.has_steering_feedback = True
+
+    def update_kinematic_odometry(self, stamp):
+        time_now = Time.from_msg(stamp)
+        if self.last_kinematic_time is None:
+            dt = 0.0
+        else:
+            dt = (time_now - self.last_kinematic_time).nanoseconds / 1e9
+            if dt < 0.0 or dt > 0.5:
+                dt = 0.0
+        self.last_kinematic_time = time_now
+
+        # Average rear wheel speed
+        v = 0.5 * (self.left_wheel_speed + self.right_wheel_speed)
         self.current_speed = v
 
-        time_now = self.get_clock().now()
+        # Angular velocity from Ackermann kinematics: omega_z = (v / L) * tan(steering_angle)
+        omega_z = (v / self.wheelbase) * math.tan(self.current_steering_angle)
 
-        if self.use_kinematic_odom:
-            # Kinematic Wheel Odometry Integration (emulating vesc_to_odom_node)
-            if self.last_odom_time is None:
-                dt = 0.0
-            else:
-                dt = (time_now - self.last_odom_time).nanoseconds / 1e9
-                if dt < 0.0 or dt > 0.5:
-                    dt = 0.0
-            self.last_odom_time = time_now
-
-            # Angular velocity from Ackermann kinematics: omega_z = (v / L) * tan(steering_angle)
-            omega_z = (v / self.wheelbase) * math.tan(self.current_steering_angle)
-
-            # Integrate pose
+        if dt > 0.0:
             self.odom_yaw += omega_z * dt
             # Normalize yaw to [-pi, pi]
             self.odom_yaw = math.atan2(math.sin(self.odom_yaw), math.cos(self.odom_yaw))
@@ -196,26 +277,57 @@ class F110AutoDriveAdapter(Node):
             self.odom_x += v * math.cos(self.odom_yaw) * dt
             self.odom_y += v * math.sin(self.odom_yaw) * dt
 
-            # Construct kinematic odometry message
-            odom_msg = Odometry()
-            odom_msg.header.stamp = msg.header.stamp
-            odom_msg.header.frame_id = 'odom'
-            odom_msg.child_frame_id = 'base_link'
+        # Construct kinematic odometry message
+        odom_msg = Odometry()
+        odom_msg.header.stamp = stamp
+        odom_msg.header.frame_id = 'odom'
+        odom_msg.child_frame_id = 'base_link'
 
-            odom_msg.pose.pose.position.x = self.odom_x
-            odom_msg.pose.pose.position.y = self.odom_y
-            odom_msg.pose.pose.position.z = 0.0
-            odom_msg.pose.pose.orientation = quaternion_from_euler(0.0, 0.0, self.odom_yaw)
+        odom_msg.pose.pose.position.x = self.odom_x
+        odom_msg.pose.pose.position.y = self.odom_y
+        odom_msg.pose.pose.position.z = 0.0
+        odom_msg.pose.pose.orientation = quaternion_from_euler(0.0, 0.0, self.odom_yaw)
 
-            odom_msg.twist.twist.linear.x = v
-            odom_msg.twist.twist.linear.y = 0.0
-            odom_msg.twist.twist.angular.z = omega_z
-        else:
-            # Pass ground-truth odometry from simulator with remapped frame_ids
-            odom_msg = msg
-            odom_msg.header.frame_id = 'odom'
-            odom_msg.child_frame_id = 'base_link'
+        # Pose Covariance (matching EKF / physical VESC expectations)
+        # indices: 0=x, 7=y, 14=z, 21=roll, 28=pitch, 35=yaw
+        odom_msg.pose.covariance[0] = 0.2    # x variance
+        odom_msg.pose.covariance[7] = 0.2    # y variance
+        odom_msg.pose.covariance[14] = 1e-6  # z variance
+        odom_msg.pose.covariance[21] = 1e-6  # roll variance
+        odom_msg.pose.covariance[28] = 1e-6  # pitch variance
+        odom_msg.pose.covariance[35] = 0.4   # yaw heading variance
 
+        # Twist
+        odom_msg.twist.twist.linear.x = v
+        odom_msg.twist.twist.linear.y = 0.0
+        odom_msg.twist.twist.linear.z = 0.0
+        odom_msg.twist.twist.angular.x = 0.0
+        odom_msg.twist.twist.angular.y = 0.0
+        odom_msg.twist.twist.angular.z = omega_z
+
+        # Twist Covariance
+        # indices: 0=vx, 7=vy, 14=vz, 21=vroll, 28=vpitch, 35=vyaw
+        odom_msg.twist.covariance[0] = 0.05  # linear.x speed variance
+        odom_msg.twist.covariance[7] = 0.05  # linear.y speed variance
+        odom_msg.twist.covariance[14] = 1e-6 # linear.z speed variance
+        odom_msg.twist.covariance[21] = 1e-6 # vroll variance
+        odom_msg.twist.covariance[28] = 1e-6 # vpitch variance
+        odom_msg.twist.covariance[35] = 0.4  # angular.z variance
+
+        self.publish_odometry(odom_msg)
+
+    def odom_callback(self, msg: Odometry):
+        # Ground-truth debug mode: pass through simulator odometry with remapped frame_ids
+        v = msg.twist.twist.linear.x
+        self.current_speed = v
+
+        odom_msg = msg
+        odom_msg.header.frame_id = 'odom'
+        odom_msg.child_frame_id = 'base_link'
+
+        self.publish_odometry(odom_msg)
+
+    def publish_odometry(self, odom_msg: Odometry):
         # Publish to both /odom and /vesc/odom
         self.odom_pub.publish(odom_msg)
         self.vesc_odom_pub.publish(odom_msg)
@@ -241,8 +353,8 @@ class F110AutoDriveAdapter(Node):
             self.car_state_pose_pub.publish(pose_msg)
 
     def imu_callback(self, msg: Imu):
-        # Forward standard IMU data with frame_id remapped to 'imu'
-        msg.header.frame_id = 'imu'
+        # Forward standard IMU data with frame_id remapped to 'imu_link' (isolated from autodrive_bridge TF)
+        msg.header.frame_id = 'imu_link'
         self.imu_pub_ekf.publish(msg)
         self.imu_pub_ctrl.publish(msg)
 
@@ -270,7 +382,8 @@ class F110AutoDriveAdapter(Node):
             self.in_timeout = False
         target_speed = msg.drive.speed
         target_steering_angle = msg.drive.steering_angle
-        self.current_steering_angle = target_steering_angle
+        if not self.has_steering_feedback:
+            self.current_steering_angle = target_steering_angle
 
         # 1. Normalize steering command: map to [-1, 1]
         u_steer = target_steering_angle / self.max_steer_rad

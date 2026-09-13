@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="max_steer_rad" default="0.4189" />
-  <arg name="wheelbase" default="0.25" />
-  <arg name="use_kinematic_odom" default="False" />
+  <arg name="wheelbase" default="0.324" />
+  <arg name="wheel_radius" default="0.059" />
+  <arg name="use_kinematic_odom" default="True" />
   <arg name="drive_topic" default="/ackermann_cmd" />
   <arg name="watchdog_timeout" default="0.2" />
   <arg name="Kff_lin" default="0.04" />
@@ -24,6 +25,7 @@
   <node pkg="f110_autodrive" exec="autodrive_adapter" name="autodrive_adapter" output="screen">
     <param name="max_steer_rad" value="$(var max_steer_rad)" />
     <param name="wheelbase" value="$(var wheelbase)" />
+    <param name="wheel_radius" value="$(var wheel_radius)" />
     <param name="use_kinematic_odom" value="$(var use_kinematic_odom)" />
     <param name="drive_topic" value="$(var drive_topic)" />
     <param name="watchdog_timeout" value="$(var watchdog_timeout)" />
