@@ -50,7 +50,7 @@ class KeyboardTeleopNode(Node):
 
         self.declare_parameter('topic_name', '/teleop')
         self.declare_parameter('max_speed', 2.0)
-        self.declare_parameter('max_steering', 0.34)  # ~20 degrees in radians
+        self.declare_parameter('max_steering', 0.523)  # ~30 degrees in radians
         self.declare_parameter('repeat_rate', 20.0)    # Hz
         self.declare_parameter('mode', 'interactive')   # 'interactive' or 'passthrough'
 

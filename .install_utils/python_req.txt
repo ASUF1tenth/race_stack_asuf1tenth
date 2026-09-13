@@ -26,11 +26,9 @@ trajectory-planning-helpers~=0.79 # TODO: update to 0.80 as soon as it is releas
 # Manually install quadprog: pip install quadprog~=0.1.11 
 # this will throw dependency error because of the trajectory planning helpers but it is not a problem, just can't be done in the requirements file
 
-# AutoDRIVE requirements
-eventlet
-flask
-flask-socketio
-python-socketio
-python-engineio
+# AutoDRIVE requirements (Protocol v2 / Engine.IO v3 compatible with AutoDRIVE Simulator)
+python-socketio==4.2.0
+python-engineio==3.13.0
+attrdict==2.0.1
 gevent
-gevent-websocket
+gevent-websocket==0.10.1
