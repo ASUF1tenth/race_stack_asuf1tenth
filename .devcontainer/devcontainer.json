@@ -1,5 +1,5 @@
 {
-    "name": "ForzaETH Race Stack Jazzy",
+    "name": "ASUF1Tenth Race Stack Jazzy",
     "privileged": true,
     "remoteUser": "${localEnv:USER}",
     "image": "asuf1tenth_racestack_ros2:jazzy",
