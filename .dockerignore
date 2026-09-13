@@ -1,0 +1,13 @@
+.git/
+.github/
+.vscode/
+build/
+install/
+log/
+**/build/
+**/install/
+**/log/
+autodrive_devkit/autodrive_simulator/
+autodrive_devkit/graphics/
+**/__pycache__/
+*.pyc
